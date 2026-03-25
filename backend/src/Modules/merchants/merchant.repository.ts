@@ -1,5 +1,4 @@
 
-cat > backend/src/modules/merchants/merchant.repository.ts << 'EOF'
 import { prisma } from "../../shared/database/prisma";
 export class MerchantRepository {
   async create(data: any)            { return prisma.merchant.create({ data }); }
