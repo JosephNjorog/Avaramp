@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+backend/.env
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Prisma generated client
+# (keep schema.prisma, ignore generated files)
+backend/src/generated/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# Hardhat artifacts
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Temporary
+tmp/
+temp/
