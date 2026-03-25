@@ -1,0 +1,8 @@
+import { Router }             from "express";
+import { MerchantController } from "./merchant.controller";
+import { authenticate }        from "../../shared/middleware/auth";
+const router     = Router();
+const controller = new MerchantController();
+router.post("/",    authenticate, controller.create.bind(controller));
+router.get("/:id",  authenticate, controller.getById.bind(controller));
+export default router;
