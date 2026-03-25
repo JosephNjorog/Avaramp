@@ -1,0 +1,149 @@
+cat > backend/prisma/schema.prisma << 'EOF'
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  phone        String?
+  kycStatus    KycStatus  @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  payments     Payment[]
+}
+
+// ─────────────────────────────────────────────
+// MERCHANTS
+// ─────────────────────────────────────────────
+model Merchant {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  walletAddress  String    @unique
+  mpesaTill      String
+  webhookUrl     String?
+  webhookSecret  String
+  feeOverrideBps Int?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  payments       Payment[]
+}
+
+// ─────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────
+model Payment {
+  id               String        @id @default(uuid())
+  idempotencyKey   String?       @unique
+  merchantId       String
+  merchant         Merchant      @relation(fields: [merchantId], references: [id])
+  userId           String?
+  user             User?         @relation(fields: [userId], references: [id])
+  amountUsdc       String
+  amountFiat       String
+  fiatCurrency     String
+  depositAddress   String        @unique
+  depositPk        String
+  status           PaymentStatus @default(PENDING)
+  expiresAt        DateTime
+  confirmedTxHash  String?
+  confirmedAt      DateTime?
+  onChainAmount    String?
+  fxRate           Float?
+  fiatAmount       String?
+  mpesaReceiptId   String?
+  settledAt        DateTime?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  transactions     Transaction[]
+  ledgerEntries    LedgerEntry[]
+  webhooks         WebhookDelivery[]
+}
+
+// ─────────────────────────────────────────────
+// TRANSACTIONS
+// ─────────────────────────────────────────────
+model Transaction {
+  id          String   @id @default(uuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  txHash      String   @unique
+  blockNumber Int
+  fromAddress String
+  toAddress   String
+  amount      String
+  token       String   @default("USDC")
+  chainId     Int      @default(43114)
+  createdAt   DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([txHash])
+}
+
+// ─────────────────────────────────────────────
+// LEDGER (Double-Entry)
+// ─────────────────────────────────────────────
+model LedgerEntry {
+  id          String   @id @default(uuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  type        String
+  side        String   // DEBIT | CREDIT
+  account     String   // escrow | treasury | merchant:{id}
+  amount      String
+  amountRaw   BigInt
+  currency    String
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([account])
+  @@index([type])
+}
+
+// ─────────────────────────────────────────────
+// WEBHOOK DELIVERIES
+// ─────────────────────────────────────────────
+model WebhookDelivery {
+  id        String   @id @default(uuid())
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  event     String
+  status    String   // DELIVERED | FAILED
+  error     String?
+  sentAt    DateTime @default(now())
+
+  @@index([paymentId])
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  SETTLED
+  REFUNDED
+  EXPIRED
+  FAILED
+}
+
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+EOF
+
+echo "✅ Prisma schema written"
