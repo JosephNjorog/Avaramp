@@ -1,2 +1,2 @@
 # Avaramp
-payment intergrations in a snapshot
+Your Launchpad for payment intergrations in a snapshot
