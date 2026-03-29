@@ -12,7 +12,7 @@ export class PaymentRepository {
   }
   async findPending() {
     return prisma.payment.findMany({
-      where: { status: PaymentStatus.PENDING }, 1
+      where: { status: PaymentStatus.PENDING },
       take:  50,
     });
   }
