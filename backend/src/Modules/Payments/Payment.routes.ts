@@ -1,10 +1,10 @@
 import { Router }           from "express";
 import { PaymentController } from "./payment.controller";
-import { authenticate }      from "../../shared/middleware/auth";
-import { idempotency }       from "../../shared/middleware/idempotency";
-import { validate }          from "../../shared/middleware/validate";
-import { paymentLimiter }    from "../../shared/middleware/rateLimit";
-import { createPaymentSchema } from "./payment.schema";
+import { authenticate }      from "../../shared/Middleware/Auth";
+import { idempotency }       from "../../shared/Middleware/indempotency";
+import { validate }          from "../../shared/Middleware/Validate";
+import { paymentLimiter }    from "../../shared/Middleware/rateLimit";
+import { createPaymentSchema } from "./Payment.schema";
 const router     = Router();
 const controller = new PaymentController(); 
 router.post(
