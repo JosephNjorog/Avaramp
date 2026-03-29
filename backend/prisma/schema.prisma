@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  phone     String?
-  kycStatus KycStatus @default(PENDING)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  payments  Payment[]
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phone        String?
+  passwordHash String?
+  kycStatus    KycStatus @default(PENDING)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  payments     Payment[]
 }
 
 model Merchant {
