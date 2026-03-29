@@ -35,19 +35,19 @@ AvaRamp bridges the gap between decentralized finance and everyday commerce in e
 
 **Supported fiat settlement currencies:**
 
-| Currency | Country |
-|----------|---------|
-| KES | Kenya |
-| NGN | Nigeria |
-| GHS | Ghana |
-| TZS | Tanzania |
-| UGX | Uganda |
+| Currency | Country   |
+| -------- | --------- |
+| KES      | Kenya     |
+| NGN      | Nigeria   |
+| GHS      | Ghana     |
+| TZS      | Tanzania  |
+| UGX      | Uganda    |
 
 ---
 
 ## How It Works
 
-```
+```text
 User                     AvaRamp Backend                  Avalanche C-Chain         M-Pesa
  │                              │                                  │                   │
  │  POST /payments              │                                  │                   │
@@ -77,22 +77,22 @@ User                     AvaRamp Backend                  Avalanche C-Chain     
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Language | TypeScript 5.4 |
-| Runtime | Node.js |
-| Framework | Express.js 4.18 |
-| Database | PostgreSQL 15 (via Prisma ORM) |
-| Cache / Queue | Redis 7 + BullMQ |
-| Blockchain | Avalanche C-Chain — ethers.js 6, Glacier API |
-| Token | USDC (`0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6C`) |
-| Smart Contracts | Solidity 0.8.24 (OpenZeppelin) |
-| Authentication | JWT (Bearer tokens) |
-| Validation | Zod |
-| Encryption | AES-256-GCM (Node.js crypto) |
-| Logging | Pino |
-| Security Headers | Helmet, CORS, Rate limiting |
-| Infrastructure | Docker + Docker Compose |
+| Layer            | Technology                                          |
+| ---------------- | --------------------------------------------------- |
+| Language         | TypeScript 5.4                                      |
+| Runtime          | Node.js                                             |
+| Framework        | Express.js 4.18                                     |
+| Database         | PostgreSQL 15 (via Prisma ORM)                      |
+| Cache / Queue    | Redis 7 + BullMQ                                    |
+| Blockchain       | Avalanche C-Chain — ethers.js 6, Glacier API        |
+| Token            | USDC (`0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6C`) |
+| Smart Contracts  | Solidity 0.8.24 (OpenZeppelin)                      |
+| Authentication   | JWT (Bearer tokens)                                 |
+| Validation       | Zod                                                 |
+| Encryption       | AES-256-GCM (Node.js crypto)                        |
+| Logging          | Pino                                                |
+| Security Headers | Helmet, CORS, Rate limiting                         |
+| Infrastructure   | Docker + Docker Compose                             |
 
 ---
 
@@ -100,7 +100,7 @@ User                     AvaRamp Backend                  Avalanche C-Chain     
 
 AvaRamp follows a **modular monolith** architecture with clear domain separation. Each domain has its own routes, controller, service, and repository.
 
-```
+```text
 backend/src/
 ├── main.ts                  # Entry point — starts server on PORT (default 3000)
 ├── app.ts                   # Express app setup — middleware, route registration
@@ -143,7 +143,7 @@ backend/src/
 
 Every authenticated request flows through:
 
-```
+```text
 Request
   → Helmet (security headers)
   → CORS
@@ -166,8 +166,9 @@ AvaRamp uses a **double-entry accounting** ledger to ensure financial integrity.
 
 ### Core Models
 
-**User**
-```
+#### User
+
+```text
 id            UUID (PK)
 email         String (unique)
 phone         String?
@@ -176,8 +177,9 @@ createdAt     DateTime
 updatedAt     DateTime
 ```
 
-**Merchant**
-```
+#### Merchant
+
+```text
 id              UUID (PK)
 name            String
 email           String (unique)
@@ -191,8 +193,9 @@ createdAt       DateTime
 updatedAt       DateTime
 ```
 
-**Payment**
-```
+#### Payment
+
+```text
 id                UUID (PK)
 idempotencyKey    String? (unique)    ← Deduplication key
 merchantId        UUID (FK → Merchant)
@@ -213,8 +216,9 @@ settledAt         DateTime?
 metadata          Json?
 ```
 
-**Transaction** — On-chain transaction records
-```
+#### Transaction — On-chain transaction records
+
+```text
 id          UUID (PK)
 paymentId   UUID (FK → Payment)
 txHash      String (unique)
@@ -226,8 +230,9 @@ token       String (default: USDC)
 chainId     Int (default: 43114)
 ```
 
-**LedgerEntry** — Double-entry accounting
-```
+#### LedgerEntry — Double-entry accounting
+
+```text
 id        UUID (PK)
 paymentId UUID (FK → Payment)
 type      LedgerEntryType           ← USDC_RECEIVED | FX_CONVERSION | PROTOCOL_FEE
@@ -240,8 +245,9 @@ currency  String
 metadata  Json?
 ```
 
-**WebhookDelivery** — Tracks outbound webhook attempts
-```
+#### WebhookDelivery — Tracks outbound webhook attempts
+
+```text
 id        UUID (PK)
 paymentId UUID (FK → Payment)
 event     String
@@ -255,18 +261,20 @@ sentAt    DateTime?
 ## API Reference
 
 All protected endpoints require:
-```
+
+```text
 Authorization: Bearer <jwt_token>
 ```
 
 ### Payments
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/payments` | Required | Create a new payment request |
-| `GET` | `/payments/:id` | Required | Get payment status and details |
+| Method  | Path           | Auth     | Description                      |
+| ------- | -------------- | -------- | -------------------------------- |
+| `POST`  | `/payments`    | Required | Create a new payment request     |
+| `GET`   | `/payments/:id`| Required | Get payment status and details   |
 
 **POST /payments — Request body:**
+
 ```json
 {
   "merchantId": "uuid",
@@ -278,6 +286,7 @@ Authorization: Bearer <jwt_token>
 ```
 
 **POST /payments — Response:**
+
 ```json
 {
   "id": "uuid",
@@ -291,30 +300,30 @@ Authorization: Bearer <jwt_token>
 
 ### Merchants
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/merchants` | Required | Register a new merchant |
-| `GET` | `/merchants/:id` | Required | Get merchant details |
+| Method  | Path             | Auth     | Description               |
+| ------- | ---------------- | -------- | ------------------------- |
+| `POST`  | `/merchants`     | Required | Register a new merchant   |
+| `GET`   | `/merchants/:id` | Required | Get merchant details      |
 
 ### Users
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/users` | Public | Register a new user |
-| `GET` | `/users/:id` | Required | Get user details |
+| Method  | Path        | Auth     | Description          |
+| ------- | ----------- | -------- | -------------------- |
+| `POST`  | `/users`    | Public   | Register a new user  |
+| `GET`   | `/users/:id`| Required | Get user details     |
 
 ### Settlements
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/settlements` | Required | Manually trigger settlement |
-| `GET` | `/settlements/:id` | Required | Get settlement details |
+| Method  | Path               | Auth     | Description                    |
+| ------- | ------------------ | -------- | ------------------------------ |
+| `POST`  | `/settlements`     | Required | Manually trigger settlement    |
+| `GET`   | `/settlements/:id` | Required | Get settlement details         |
 
 ### Health
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/health` | Public | Service health check |
+| Method | Path      | Auth   | Description          |
+| ------ | --------- | ------ | -------------------- |
+| `GET`  | `/health` | Public | Service health check |
 
 ---
 
@@ -326,24 +335,26 @@ Deployed on **Avalanche C-Chain** (chainId: 43114).
 
 **Core functions:**
 
-| Function | Role | Description |
-|----------|------|-------------|
-| `deposit(paymentId, merchant, amount)` | User | Deposit USDC to pay a merchant |
-| `markSettled(paymentId)` | OPERATOR_ROLE | Mark payment settled after M-Pesa confirmation |
-| `refund(paymentId)` | OPERATOR_ROLE | Refund USDC to original payer |
-| `registerMerchant(merchant)` | OPERATOR_ROLE | Whitelist a new merchant |
-| `merchantWithdraw(amount)` | MERCHANT_ROLE | Merchant withdraws USDC balance |
-| `treasuryWithdraw(amount)` | TREASURY_ROLE | Protocol fee withdrawal |
-| `setProtocolFee(newBps)` | DEFAULT_ADMIN | Update protocol fee (max 5%) |
-| `setTreasury(newTreasury)` | DEFAULT_ADMIN | Update treasury address |
+| Function                              | Role           | Description                                      |
+| ------------------------------------- | -------------- | ------------------------------------------------ |
+| `deposit(paymentId, merchant, amount)`| User           | Deposit USDC to pay a merchant                   |
+| `markSettled(paymentId)`              | OPERATOR_ROLE  | Mark payment settled after M-Pesa confirmation   |
+| `refund(paymentId)`                   | OPERATOR_ROLE  | Refund USDC to original payer                    |
+| `registerMerchant(merchant)`          | OPERATOR_ROLE  | Whitelist a new merchant                         |
+| `merchantWithdraw(amount)`            | MERCHANT_ROLE  | Merchant withdraws USDC balance                  |
+| `treasuryWithdraw(amount)`            | TREASURY_ROLE  | Protocol fee withdrawal                          |
+| `setProtocolFee(newBps)`              | DEFAULT_ADMIN  | Update protocol fee (max 5%)                     |
+| `setTreasury(newTreasury)`            | DEFAULT_ADMIN  | Update treasury address                          |
 
 **Access control roles:**
+
 - `DEFAULT_ADMIN_ROLE` — Protocol owner
 - `TREASURY_ROLE` — Can withdraw protocol fees
 - `OPERATOR_ROLE` — Can register merchants, mark settled, issue refunds
 - `MERCHANT_ROLE` — Can withdraw merchant balance
 
 **Security features:**
+
 - `ReentrancyGuard` — Prevents reentrancy attacks
 - `Pausable` — Emergency stop capability
 - `SafeERC20` — Safe token transfer patterns
@@ -358,42 +369,45 @@ AvaRamp uses **BullMQ** backed by Redis for all asynchronous work.
 
 ### Queues
 
-| Queue | Purpose |
-|-------|---------|
-| `paymentQueue` | Monitor on-chain deposits |
-| `settlementQueue` | Process M-Pesa settlements |
-| `webhookQueue` | Deliver merchant webhook events |
+| Queue             | Purpose                        |
+| ----------------- | ------------------------------ |
+| `paymentQueue`    | Monitor on-chain deposits      |
+| `settlementQueue` | Process M-Pesa settlements     |
+| `webhookQueue`    | Deliver merchant webhook events|
 
 ### Workers
 
 **PaymentWorker** (concurrency: 20)
+
 - Job: `watch-deposit`
 - Polls Avalanche Glacier API for USDC transfers to the payment's deposit address
 - On confirmed deposit: enqueues a `settle-payment` job
 - On expiry: marks payment as `EXPIRED`
 
 **SettlementWorker** (concurrency: 5, rate: 10/sec)
+
 - Job: `settle-payment`
 - Calls the settlement service to execute M-Pesa STK push
 - Records ledger entries on completion
 
 **WebhookWorker** (concurrency: 10, rate: 50/sec)
+
 - Delivers `payment.confirmed`, `payment.settled`, and `payment.failed` events to merchant webhook URLs
 
 ---
 
 ## Security
 
-| Mechanism | Implementation |
-|-----------|---------------|
-| Authentication | JWT Bearer tokens (HS256, min 32-char secret) |
-| Encryption at rest | AES-256-GCM for deposit private keys |
-| HTTP security | Helmet (XSS, clickjacking, HSTS, etc.) |
-| Request deduplication | Idempotency keys on payment creation |
-| Rate limiting | 10 req/min per IP on `/payments`, 100 req/15min globally |
-| Input validation | Zod schemas on all request bodies |
-| Webhook integrity | HMAC-signed webhook payloads with per-merchant secret |
-| Smart contract safety | ReentrancyGuard, Pausable, SafeERC20, AccessControl |
+| Mechanism              | Implementation                                          |
+| ---------------------- | ------------------------------------------------------- |
+| Authentication         | JWT Bearer tokens (HS256, min 32-char secret)           |
+| Encryption at rest     | AES-256-GCM for deposit private keys                    |
+| HTTP security          | Helmet (XSS, clickjacking, HSTS, etc.)                  |
+| Request deduplication  | Idempotency keys on payment creation                    |
+| Rate limiting          | 10 req/min per IP on `/payments`, 100 req/15min globally|
+| Input validation       | Zod schemas on all request bodies                       |
+| Webhook integrity      | HMAC-signed webhook payloads with per-merchant secret   |
+| Smart contract safety  | ReentrancyGuard, Pausable, SafeERC20, AccessControl     |
 
 ---
 
@@ -439,6 +453,7 @@ JWT_SECRET=minimum_32_character_jwt_signing_secret
 ## Running Locally
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Node.js 20+
 
@@ -480,7 +495,7 @@ docker-compose up --build
 
 ## Project Structure
 
-```
+```text
 Avaramp/
 ├── backend/                  # Node.js/Express API
 │   ├── src/
