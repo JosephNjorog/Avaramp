@@ -1,6 +1,6 @@
 import { Router }             from "express";
-import { MerchantController } from "./merchant.controller";
-import { authenticate }        from "../../shared/middleware/auth";
+import { MerchantController } from "./controller";
+import { authenticate }        from "../../shared/Middleware/Auth";
 const router     = Router();
 const controller = new MerchantController();
 router.post("/",    authenticate, controller.create.bind(controller));
