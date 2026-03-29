@@ -34,12 +34,13 @@ export class LedgerService {
             prisma.ledgerEntry.create({
                 data: {
                     paymentId: entry.paymentId,
-                    type: entry.type,
-                    side: "DEBIT",
-                    account: entry.debitAcct,
-                    amount: entry.amount,
-                    currency: entry.currency,
-                    metadata: entry.metadata ?? {},
+                    type:      entry.type,
+                    side:      "DEBIT",
+                    account:   entry.debitAcct,
+                    amount:    entry.amount,
+                    amountRaw: BigInt(Math.round(parseFloat(entry.amount) * 1_000_000)),
+                    currency:  entry.currency,
+                    metadata:  entry.metadata ?? {},
                 },
             }),
 
@@ -47,12 +48,13 @@ export class LedgerService {
             prisma.ledgerEntry.create({
                 data: {
                     paymentId: entry.paymentId,
-                    type: entry.type,
-                    side: "CREDIT",
-                    account: entry.creditAcct,
-                    amount: entry.amount,
-                    currency: entry.currency,
-                    metadata: entry.metadata ?? {},
+                    type:      entry.type,
+                    side:      "CREDIT",
+                    account:   entry.creditAcct,
+                    amount:    entry.amount,
+                    amountRaw: BigInt(Math.round(parseFloat(entry.amount) * 1_000_000)),
+                    currency:  entry.currency,
+                    metadata:  entry.metadata ?? {},
                 },
             }),
         ]);
