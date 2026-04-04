@@ -1,55 +1,57 @@
 "use client";
 
+import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import React from "react";
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "outline" | "danger";
-  size?:    "sm" | "md" | "lg";
-  loading?: boolean;
-  icon?:    React.ReactNode;
-}
 
 const variants = {
-  primary:   "bg-accent hover:bg-accent/90 text-white shadow-glow-sm hover:shadow-accent transition-all",
-  secondary: "bg-accent-2/10 hover:bg-accent-2/20 text-accent-2 border border-accent-2/20 hover:border-accent-2/40",
-  ghost:     "hover:bg-white/5 text-subtle hover:text-white",
-  outline:   "border border-border hover:border-accent/50 bg-transparent text-white hover:bg-card",
-  danger:    "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20",
+  primary:   "bg-indigo-DEFAULT text-white hover:opacity-90 active:opacity-80",
+  secondary: "bg-surface border border-border text-primary hover:bg-card hover:border-[#36363c]",
+  ghost:     "text-secondary hover:text-primary hover:bg-surface",
+  danger:    "bg-red-dim text-red-DEFAULT border border-red-DEFAULT/20 hover:bg-red-DEFAULT/20",
+  outline:   "border border-border text-primary hover:border-[#36363c] hover:bg-surface",
 };
 
 const sizes = {
-  sm: "h-8 px-3 text-sm gap-1.5",
-  md: "h-10 px-4 text-sm gap-2",
-  lg: "h-12 px-6 text-base gap-2.5",
+  xs: "h-7 px-2.5 text-xs gap-1.5 rounded-md",
+  sm: "h-8 px-3 text-sm gap-1.5 rounded-lg",
+  md: "h-9 px-4 text-sm gap-2 rounded-lg",
+  lg: "h-10 px-5 text-sm gap-2 rounded-xl font-medium",
 };
 
-export default function Button({
-  variant = "primary",
-  size = "md",
-  loading,
-  icon,
-  children,
-  className,
-  disabled,
-  ...props
-}: ButtonProps) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: keyof typeof variants;
+  size?: keyof typeof sizes;
+  loading?: boolean;
+  icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "primary", size = "md", loading, icon, iconRight, children, className, disabled, ...props }, ref) => (
+    <button
+      ref={ref}
+      disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center font-medium transition-all duration-150 cursor-pointer",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-DEFAULT/50",
+        "disabled:opacity-50 disabled:cursor-not-allowed select-none",
         variants[variant],
         sizes[size],
         className
       )}
-      disabled={disabled || loading}
-      {...(props as any)}
+      {...props}
     >
-      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
+      {loading ? (
+        <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.37 0 0 5.37 0 12h4z" />
+        </svg>
+      ) : icon ? <span className="shrink-0">{icon}</span> : null}
       {children}
-    </motion.button>
-  );
-}
+      {!loading && iconRight ? <span className="shrink-0">{iconRight}</span> : null}
+    </button>
+  )
+);
+
+Button.displayName = "Button";
+export default Button;
