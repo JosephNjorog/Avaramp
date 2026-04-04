@@ -3,27 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Zap, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Zap } from "lucide-react";
 import toast from "react-hot-toast";
-import Button from "@/components/ui/Button";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import Button from "@/components/ui/Button";
 
 const schema = z.object({
   email:    z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type Form = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const [showPw, setShowPw] = useState(false);
+  const { setAuth } = useAuthStore();
+  const [showPass, setShowPass] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -32,89 +31,83 @@ export default function LoginPage() {
   const onSubmit = async (data: Form) => {
     try {
       const res = await authApi.login(data);
-      setAuth(res.data.data.user, res.data.data.token);
-      toast.success("Welcome back!");
-      router.push("/dashboard");
+      const { user, token } = res.data.data ?? res.data;
+      setAuth(user, token);
+      router.replace("/dashboard");
     } catch (err: any) {
-      toast.error(err.message || "Login failed");
+      toast.error(err.message || "Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-hero-glow opacity-40" />
-      <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-60" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative w-full max-w-md"
-      >
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+      <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center shadow-accent">
-              <Zap className="w-5 h-5 text-white" fill="white" />
-            </div>
-            <span className="text-white font-bold text-xl">
-              Ava<span className="text-gradient-purple">Ramp</span>
-            </span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-subtle text-sm">Sign in to your AvaRamp account</p>
-        </div>
+        <Link href="/" className="flex items-center gap-2 justify-center mb-8">
+          <div className="w-8 h-8 rounded-xl bg-indigo-DEFAULT flex items-center justify-center">
+            <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="font-semibold text-primary">AvaRamp</span>
+        </Link>
 
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Email</label>
+        <div className="bg-card border border-border rounded-2xl p-6">
+          <div className="mb-6">
+            <h1 className="text-xl font-bold text-primary">Welcome back</h1>
+            <p className="text-sm text-secondary mt-1">Sign in to your merchant account</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-primary">Email</label>
               <input
                 {...register("email")}
                 type="email"
-                placeholder="you@example.com"
-                className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-white text-sm placeholder:text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all duration-200"
+                autoComplete="email"
+                placeholder="you@company.com"
+                className="input"
               />
-              {errors.email && (
-                <p className="text-red-400 text-xs mt-1.5">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-xs text-red-DEFAULT">{errors.email.message}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Password</label>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-primary">Password</label>
+                <Link href="/auth/forgot" className="text-xs text-indigo-DEFAULT hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <input
                   {...register("password")}
-                  type={showPw ? "text" : "password"}
+                  type={showPass ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full bg-surface border border-border rounded-xl px-4 py-3 pr-11 text-white text-sm placeholder:text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all duration-200"
+                  className="input pr-10"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-subtle transition-colors"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-secondary transition-colors"
                 >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="text-xs text-red-DEFAULT">{errors.password.message}</p>}
             </div>
 
-            <Button type="submit" className="w-full" size="lg" loading={isSubmitting}>
+            <Button type="submit" className="w-full" loading={isSubmitting}>
               Sign in
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-subtle">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/register" className="text-accent hover:text-accent-light transition-colors">
-              Create one
-            </Link>
-          </div>
         </div>
-      </motion.div>
+
+        <p className="text-center text-sm text-secondary mt-5">
+          Don&apos;t have an account?{" "}
+          <Link href="/auth/register" className="text-indigo-DEFAULT hover:underline font-medium">
+            Create one free
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
