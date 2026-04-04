@@ -1,182 +1,127 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, DollarSign, Zap, Globe } from "lucide-react";
+import { DollarSign, Zap, TrendingUp, Globe } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 
-const volumeData = [
-  { month: "Oct", volume: 4200, settlements: 3800 },
-  { month: "Nov", volume: 6800, settlements: 6100 },
-  { month: "Dec", volume: 5400, settlements: 5000 },
-  { month: "Jan", volume: 9200, settlements: 8700 },
-  { month: "Feb", volume: 11400, settlements: 10800 },
-  { month: "Mar", volume: 12480, settlements: 11900 },
+const VOLUME = [
+  { m: "Nov", vol: 6800, settled: 6100 },
+  { m: "Dec", vol: 5400, settled: 5000 },
+  { m: "Jan", vol: 9200, settled: 8700 },
+  { m: "Feb", vol: 11400, settled: 10800 },
+  { m: "Mar", vol: 12480, settled: 11900 },
+  { m: "Apr", vol: 2480,  settled: 2200  },
 ];
 
-const fxData = [
-  { time: "09:00", KES: 130.2, NGN: 1580 },
-  { time: "11:00", KES: 130.5, NGN: 1582 },
-  { time: "13:00", KES: 131.0, NGN: 1585 },
-  { time: "15:00", KES: 130.8, NGN: 1583 },
-  { time: "17:00", KES: 131.2, NGN: 1587 },
-  { time: "19:00", KES: 131.5, NGN: 1590 },
+const DIST = [
+  { name: "KES", value: 52, color: "#7c6ff7" },
+  { name: "NGN", value: 28, color: "#60a5fa" },
+  { name: "GHS", value: 10, color: "#3dd68c" },
+  { name: "TZS", value: 6,  color: "#f5a623" },
+  { name: "UGX", value: 4,  color: "#f56060" },
 ];
 
-const currencyDist = [
-  { name: "KES", value: 52, color: "#7c5cff" },
-  { name: "NGN", value: 28, color: "#3ecfcf" },
-  { name: "GHS", value: 10, color: "#f59e0b" },
-  { name: "TZS", value: 6,  color: "#ec4899" },
-  { name: "UGX", value: 4,  color: "#10b981" },
+const SETTLE_TIMES = [
+  { label: "< 1 min",  n: 14 },
+  { label: "1–2 min",  n: 38 },
+  { label: "2–5 min",  n: 22 },
+  { label: "5–15 min", n: 8  },
+  { label: "> 15 min", n: 2  },
 ];
 
-const settlementTimes = [
-  { range: "< 1 min", count: 14 },
-  { range: "1-2 min", count: 38 },
-  { range: "2-5 min", count: 22 },
-  { range: "5-15 min", count: 8 },
-  { range: "> 15 min", count: 2 },
-];
-
-const tooltipStyle = {
-  contentStyle: { background: "#111118", border: "1px solid #1e1e2a", borderRadius: 12, fontSize: 12 },
-  labelStyle: { color: "#e2e8f0" },
+const TT = {
+  contentStyle: { background: "#1a1a1d", border: "1px solid #26262a", borderRadius: 10, fontSize: 12 },
+  labelStyle: { color: "#9898a0" },
 };
 
 export default function AnalyticsPage() {
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-5 md:p-7 space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-subtle text-sm mt-1">Payment performance and settlement metrics</p>
+        <h1 className="text-lg font-semibold text-primary">Analytics</h1>
+        <p className="text-sm text-muted mt-0.5">Performance and settlement metrics</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard label="Total Volume" value="$49.5k" sub="last 6 months" icon={DollarSign} trend={{ value: 23, label: "MoM" }} accent delay={0} />
-        <StatsCard label="Avg Settlement" value="1.8 min" sub="median time" icon={Zap} trend={{ value: 12, label: "faster" }} delay={0.05} />
-        <StatsCard label="Success Rate" value="97.6%" sub="of payments" icon={TrendingUp} trend={{ value: 2.1, label: "vs last month" }} delay={0.1} />
-        <StatsCard label="Currencies" value="5" sub="KES, NGN, GHS…" icon={Globe} delay={0.15} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatsCard label="Total volume"   value="$49.5k" sub="6 months"     icon={DollarSign}  trend={{ value: 23, label: "MoM" }} />
+        <StatsCard label="Avg settlement" value="1.8 min" sub="median time" icon={Zap}         trend={{ value: 12, label: "faster" }} />
+        <StatsCard label="Success rate"   value="97.6%"  sub="of payments"  icon={TrendingUp}  trend={{ value: 2, label: "vs last mo." }} />
+        <StatsCard label="Currencies"     value="5"      sub="active"       icon={Globe} />
       </div>
 
       {/* Volume trend */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-card border border-border rounded-2xl p-5"
-      >
-        <div className="mb-5">
-          <h2 className="text-white font-semibold text-sm">Payment Volume vs Settlements</h2>
-          <p className="text-muted text-xs mt-0.5">Monthly USDC received and M-Pesa settled (USD)</p>
-        </div>
-        <ResponsiveContainer width="100%" height={240}>
-          <AreaChart data={volumeData}>
+      <div className="bg-card border border-border rounded-xl p-4">
+        <p className="text-sm font-medium text-primary mb-0.5">Volume vs settled</p>
+        <p className="text-xs text-muted mb-4">Monthly USD equivalent</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={VOLUME} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
             <defs>
-              <linearGradient id="gVol" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#7c5cff" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#7c5cff" stopOpacity={0} />
+              <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#7c6ff7" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#7c6ff7" stopOpacity={0}    />
               </linearGradient>
-              <linearGradient id="gSet" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3ecfcf" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#3ecfcf" stopOpacity={0} />
+              <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#3dd68c" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#3dd68c" stopOpacity={0}   />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2a" />
-            <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <Tooltip {...tooltipStyle} />
-            <Legend wrapperStyle={{ fontSize: 12, color: "#6b7280" }} />
-            <Area type="monotone" dataKey="volume" name="Volume" stroke="#7c5cff" strokeWidth={2} fill="url(#gVol)" />
-            <Area type="monotone" dataKey="settlements" name="Settled" stroke="#3ecfcf" strokeWidth={2} fill="url(#gSet)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#26262a" />
+            <XAxis dataKey="m"   tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis              tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+            <Tooltip {...TT} />
+            <Area type="monotone" dataKey="vol"     name="Volume"  stroke="#7c6ff7" strokeWidth={1.5} fill="url(#gv)" dot={false} />
+            <Area type="monotone" dataKey="settled" name="Settled" stroke="#3dd68c" strokeWidth={1.5} fill="url(#gs)" dot={false} />
           </AreaChart>
         </ResponsiveContainer>
-      </motion.div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* FX rates */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="lg:col-span-2 bg-card border border-border rounded-2xl p-5"
-        >
-          <div className="mb-5">
-            <h2 className="text-white font-semibold text-sm">Live FX Rates (USD base)</h2>
-            <p className="text-muted text-xs mt-0.5">Today's KES and NGN rates via Frankfurter API</p>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={fxData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2a" />
-              <XAxis dataKey="time" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip {...tooltipStyle} />
-              <Legend wrapperStyle={{ fontSize: 12, color: "#6b7280" }} />
-              <Bar yAxisId="left" dataKey="KES" name="KES/USD" fill="#7c5cff" radius={[4, 4, 0, 0]} opacity={0.85} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Currency distribution */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-2xl p-5"
-        >
-          <div className="mb-4">
-            <h2 className="text-white font-semibold text-sm">Currency Split</h2>
-            <p className="text-muted text-xs mt-0.5">Settlement currency distribution</p>
-          </div>
-          <ResponsiveContainer width="100%" height={160}>
-            <PieChart>
-              <Pie data={currencyDist} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value">
-                {currencyDist.map((entry) => (
-                  <Cell key={entry.name} fill={entry.color} opacity={0.9} />
-                ))}
-              </Pie>
-              <Tooltip {...tooltipStyle} formatter={(v: any) => `${v}%`} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="space-y-1.5 mt-2">
-            {currencyDist.map((c) => (
-              <div key={c.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ background: c.color }} />
-                  <span className="text-white">{c.name}</span>
-                </div>
-                <span className="text-muted">{c.value}%</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </div>
 
-      {/* Settlement times */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-        className="bg-card border border-border rounded-2xl p-5"
-      >
-        <div className="mb-5">
-          <h2 className="text-white font-semibold text-sm">Settlement Time Distribution</h2>
-          <p className="text-muted text-xs mt-0.5">Time from USDC confirmation to M-Pesa disbursement</p>
+      <div className="grid lg:grid-cols-2 gap-5">
+        {/* Currency split */}
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-sm font-medium text-primary mb-0.5">Currency distribution</p>
+          <p className="text-xs text-muted mb-4">By settlement volume</p>
+          <div className="flex items-center gap-6">
+            <ResponsiveContainer width={140} height={140}>
+              <PieChart>
+                <Pie data={DIST} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
+                  {DIST.map((e) => <Cell key={e.name} fill={e.color} opacity={0.9} />)}
+                </Pie>
+                <Tooltip {...TT} formatter={(v: any) => `${v}%`} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2">
+              {DIST.map((d) => (
+                <div key={d.name} className="flex items-center justify-between gap-6 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                    <span className="text-primary font-medium">{d.name}</span>
+                  </div>
+                  <span className="text-muted">{d.value}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={settlementTimes} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2a" horizontal={false} />
-            <XAxis type="number" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis dataKey="range" type="category" tick={{ fill: "#9ca3af", fontSize: 11 }} axisLine={false} tickLine={false} width={60} />
-            <Tooltip {...tooltipStyle} />
-            <Bar dataKey="count" name="Payments" fill="#3ecfcf" radius={[0, 4, 4, 0]} opacity={0.85} />
-          </BarChart>
-        </ResponsiveContainer>
-      </motion.div>
+
+        {/* Settlement time */}
+        <div className="bg-card border border-border rounded-xl p-4">
+          <p className="text-sm font-medium text-primary mb-0.5">Settlement time</p>
+          <p className="text-xs text-muted mb-4">USDC confirmed → M-Pesa received</p>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={SETTLE_TIMES} layout="vertical" margin={{ left: 10, right: 16, top: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#26262a" horizontal={false} />
+              <XAxis type="number" tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis dataKey="label" type="category" tick={{ fill: "#9898a0", fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
+              <Tooltip {...TT} />
+              <Bar dataKey="n" name="Payments" fill="#7c6ff7" radius={[0, 4, 4, 0]} opacity={0.85} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
