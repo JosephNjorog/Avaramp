@@ -2,158 +2,144 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import {
-  Plus, Search, Filter, DollarSign,
-  ArrowUpRight, Clock, XCircle, RefreshCw,
-} from "lucide-react";
+import { Plus, Search, RefreshCw, ArrowLeftRight } from "lucide-react";
 import { paymentsApi } from "@/lib/api";
-import { formatCurrency, formatDate, truncateAddress, statusColor } from "@/lib/utils";
+import { formatDate, truncateAddress } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 import CreatePaymentModal from "@/components/dashboard/CreatePaymentModal";
 
-const STATUS_FILTERS = ["ALL", "PENDING", "CONFIRMED", "SETTLED", "EXPIRED", "FAILED"];
+const STATUSES = ["ALL", "PENDING", "CONFIRMED", "SETTLED", "EXPIRED", "FAILED"];
 
 export default function PaymentsPage() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [search, setSearch]       = useState("");
+  const [status, setStatus]       = useState("ALL");
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["payments", statusFilter],
-    queryFn: () => paymentsApi.list(statusFilter !== "ALL" ? { status: statusFilter } : {}),
+    queryKey: ["payments", status],
+    queryFn: () => paymentsApi.list(status !== "ALL" ? { status } : {}),
     staleTime: 30_000,
   });
 
-  const payments: any[] = data?.data?.data ?? [];
+  const payments: any[] = data?.data?.data ?? data?.data ?? [];
 
-  const filtered = payments.filter((p) =>
-    !search ||
-    p.id?.toLowerCase().includes(search.toLowerCase()) ||
-    p.reference?.toLowerCase().includes(search.toLowerCase()) ||
-    p.depositAddress?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const statusIcon = (s: string) => {
-    switch (s) {
-      case "PENDING":   return <Clock className="w-3.5 h-3.5" />;
-      case "CONFIRMED": return <ArrowUpRight className="w-3.5 h-3.5" />;
-      case "SETTLED":   return <DollarSign className="w-3.5 h-3.5" />;
-      case "FAILED":
-      case "EXPIRED":   return <XCircle className="w-3.5 h-3.5" />;
-      default:          return null;
-    }
-  };
+  const filtered = payments.filter((p) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      p.id?.toLowerCase().includes(q) ||
+      p.reference?.toLowerCase().includes(q) ||
+      p.depositAddress?.toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
+    <div className="p-5 md:p-7 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Payments</h1>
-          <p className="text-subtle text-sm mt-1">Manage and track all your USDC payments</p>
+          <h1 className="text-lg font-semibold text-primary">Payments</h1>
+          <p className="text-sm text-muted mt-0.5">All USDC payment requests</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => refetch()}
-            className="w-9 h-9 rounded-xl bg-surface border border-border text-muted hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-lg bg-card border border-border text-muted hover:text-secondary flex items-center justify-center transition-colors"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
-          <Button icon={<Plus className="w-4 h-4" />} onClick={() => setModalOpen(true)}>
+          <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />} onClick={() => setModalOpen(true)}>
             New payment
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by ID, reference, or address…"
-            className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2.5 text-white text-sm placeholder:text-muted focus:outline-none focus:border-accent/50 transition-all"
+            placeholder="Search by ID, reference, or address"
+            className="input pl-9 h-8 text-xs"
           />
         </div>
-        <div className="flex items-center gap-1.5 bg-card border border-border rounded-xl p-1">
-          {STATUS_FILTERS.map((s) => (
+        <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-1 h-8 overflow-x-auto">
+          {STATUSES.map((s) => (
             <button
               key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                statusFilter === s
-                  ? "bg-accent/20 text-accent"
-                  : "text-muted hover:text-white"
+              onClick={() => setStatus(s)}
+              className={`px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                status === s
+                  ? "bg-indigo-dim text-indigo-DEFAULT"
+                  : "text-muted hover:text-secondary"
               }`}
             >
-              {s}
+              {s === "ALL" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
       </div>
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-2xl overflow-hidden"
-      >
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-6 py-3 border-b border-border text-muted text-xs font-medium uppercase tracking-wide">
-          <span>Payment</span>
-          <span>Amount</span>
-          <span className="hidden md:block">Address</span>
-          <span>Status</span>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_100px_140px_80px] gap-4 px-5 py-2.5 border-b border-border">
+          {["Payment", "Amount", "Address", "Status"].map((h) => (
+            <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
+          ))}
         </div>
 
         {isLoading ? (
-          <div className="p-12 text-center text-muted text-sm">Loading payments…</div>
+          <SkeletonTable rows={8} cols={4} />
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <DollarSign className="w-10 h-10 text-border mx-auto mb-3" />
-            <div className="text-white text-sm font-medium mb-1">No payments found</div>
-            <div className="text-muted text-xs mb-4">
-              {search || statusFilter !== "ALL" ? "Try adjusting your filters" : "Create your first payment to get started"}
-            </div>
-            {!search && statusFilter === "ALL" && (
-              <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />} onClick={() => setModalOpen(true)}>
-                Create payment
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <ArrowLeftRight className="w-8 h-8 text-border mb-3" strokeWidth={1} />
+            <p className="text-sm text-secondary mb-1">
+              {search || status !== "ALL" ? "No payments match your filters" : "No payments yet"}
+            </p>
+            {!search && status === "ALL" && (
+              <Button size="sm" className="mt-3" icon={<Plus className="w-3.5 h-3.5" />} onClick={() => setModalOpen(true)}>
+                Create first payment
               </Button>
             )}
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map((p) => (
-              <div key={p.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-center px-6 py-4 hover:bg-surface/50 transition-colors">
-                <div>
-                  <div className="text-white text-sm font-medium">{p.reference || "—"}</div>
-                  <div className="text-muted text-xs font-mono">{p.id?.slice(0, 12)}…</div>
-                  <div className="text-muted text-xs mt-0.5">{formatDate(p.createdAt)}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-white text-sm font-semibold">{p.amountUsdc} USDC</div>
-                  <div className="text-muted text-xs">{p.fiatAmount} {p.currency}</div>
-                </div>
-                <div className="hidden md:block">
-                  <div className="text-muted text-xs font-mono bg-surface px-2 py-1 rounded-lg">
-                    {p.depositAddress ? truncateAddress(p.depositAddress) : "—"}
-                  </div>
+            {filtered.map((p: any) => (
+              <div key={p.id} className="grid grid-cols-[1fr_100px_140px_80px] gap-4 items-center px-5 py-3.5 hover:bg-surface/60 transition-colors">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-primary truncate">
+                    {p.reference || <span className="text-muted">No reference</span>}
+                  </p>
+                  <p className="text-2xs text-muted font-mono mt-0.5">{p.id?.slice(0, 16)}…</p>
+                  <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
                 </div>
                 <div>
-                  <Badge status={p.status} />
+                  <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
+                  <p className="text-2xs text-muted">{p.fiatAmount} {p.currency}</p>
                 </div>
+                <div>
+                  {p.depositAddress ? (
+                    <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded">
+                      {truncateAddress(p.depositAddress)}
+                    </code>
+                  ) : <span className="text-2xs text-muted">—</span>}
+                </div>
+                <Badge status={p.status} />
               </div>
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
 
       <CreatePaymentModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onCreated={() => refetch()}
+        onCreated={refetch}
       />
     </div>
   );
