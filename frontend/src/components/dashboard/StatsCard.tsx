@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,47 +7,28 @@ interface StatsCardProps {
   sub?: string;
   icon: LucideIcon;
   trend?: { value: number; label: string };
-  accent?: boolean;
-  delay?: number;
 }
 
-export default function StatsCard({
-  label, value, sub, icon: Icon, trend, accent, delay = 0,
-}: StatsCardProps) {
+export default function StatsCard({ label, value, sub, icon: Icon, trend }: StatsCardProps) {
   const positive = (trend?.value ?? 0) >= 0;
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      className={cn(
-        "bg-card border border-border rounded-2xl p-5 relative overflow-hidden",
-        accent && "border-accent/20"
-      )}
-    >
-      {accent && (
-        <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl pointer-events-none" />
-      )}
-      <div className="flex items-start justify-between mb-4">
-        <p className="text-subtle text-xs font-medium uppercase tracking-wide">{label}</p>
-        <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center",
-          accent ? "bg-accent/20 text-accent" : "bg-surface text-subtle"
-        )}>
-          <Icon className="w-4 h-4" />
+    <div className="bg-card border border-border rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-muted">{label}</p>
+        <div className="w-7 h-7 rounded-lg bg-surface border border-border flex items-center justify-center">
+          <Icon className="w-3.5 h-3.5 text-secondary" strokeWidth={1.5} />
         </div>
       </div>
-      <div className="text-2xl font-bold text-white mb-1">{value}</div>
-      {sub && <p className="text-muted text-xs">{sub}</p>}
+      <div className="text-xl font-bold text-primary tracking-tight">{value}</div>
+      {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
       {trend && (
         <div className={cn(
-          "mt-3 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full",
-          positive ? "bg-emerald-400/10 text-emerald-400" : "bg-red-400/10 text-red-400"
+          "mt-2 inline-flex items-center gap-1 text-2xs font-medium",
+          positive ? "text-green-DEFAULT" : "text-red-DEFAULT"
         )}>
           {positive ? "↑" : "↓"} {Math.abs(trend.value)}% {trend.label}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
