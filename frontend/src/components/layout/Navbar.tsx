@@ -2,145 +2,121 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Menu, X, Zap } from "lucide-react";
-import Button from "@/components/ui/Button";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/store/auth";
+import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { label: "How It Works", href: "/#how-it-works" },
-  { label: "Features",     href: "/#features" },
-  { label: "Currencies",   href: "/#currencies" },
-  { label: "Docs",         href: "/docs" },
+const NAV_LINKS = [
+  { href: "#features",    label: "Features" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#pricing",     label: "Pricing" },
+  { href: "/docs",        label: "Docs" },
 ];
 
 export default function Navbar() {
-  const [scrolled,  setScrolled]  = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
-  const { user, logout } = useAuthStore();
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const { token } = useAuthStore();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <>
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-          scrolled
-            ? "bg-background/80 backdrop-blur-xl border-b border-border/60 py-3"
-            : "bg-transparent py-5"
-        )}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center shadow-glow-sm group-hover:shadow-accent transition-all duration-300">
-              <Zap className="w-4 h-4 text-white" fill="white" />
-            </div>
-            <span className="text-white font-semibold text-lg tracking-tight">
-              Ava<span className="text-gradient-purple">Ramp</span>
-            </span>
-          </Link>
-
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="nav-link text-subtle hover:text-white text-sm font-medium transition-colors duration-200"
-              >
-                {link.label}
-              </Link>
-            ))}
+    <header className={cn(
+      "fixed top-0 inset-x-0 z-40 transition-all duration-300",
+      scrolled
+        ? "bg-bg/80 backdrop-blur-xl border-b border-border"
+        : "bg-transparent"
+    )}>
+      <nav className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-indigo-DEFAULT flex items-center justify-center">
+            <Zap className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
           </div>
+          <span className="font-semibold text-sm text-primary tracking-tight">AvaRamp</span>
+        </Link>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            {user ? (
-              <>
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">Dashboard</Button>
-                </Link>
-                <Button variant="outline" size="sm" onClick={logout}>Sign out</Button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/login">
-                  <Button variant="ghost" size="sm">Sign in</Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button size="sm" className="shadow-glow-sm">
-                    Get started →
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden text-subtle hover:text-white transition-colors"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            <motion.div
-              animate={{ rotate: menuOpen ? 90 : 0 }}
-              transition={{ duration: 0.2 }}
+        {/* Desktop links */}
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="px-3 py-1.5 text-sm text-secondary hover:text-primary rounded-lg hover:bg-surface transition-all duration-150"
             >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </motion.div>
-          </button>
+              {label}
+            </Link>
+          ))}
         </div>
-      </motion.nav>
+
+        {/* Desktop CTA */}
+        <div className="hidden md:flex items-center gap-2">
+          {token ? (
+            <Link href="/dashboard">
+              <Button size="sm" variant="secondary">Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/auth/login">
+                <Button size="sm" variant="ghost">Sign in</Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button size="sm">Get started</Button>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile toggle */}
+        <button
+          className="md:hidden text-secondary hover:text-primary p-1.5 rounded-lg hover:bg-surface transition-colors"
+          onClick={() => setOpen(!open)}
+          aria-label="Menu"
+        >
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </nav>
 
       {/* Mobile menu */}
       <AnimatePresence>
-        {menuOpen && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed top-[60px] left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-border overflow-hidden md:hidden"
+            transition={{ duration: 0.2 }}
+            className="md:hidden border-t border-border bg-bg/95 backdrop-blur-xl overflow-hidden"
           >
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
+            <div className="px-4 py-3 space-y-1">
+              {NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className="block px-3 py-2.5 text-sm text-secondary hover:text-primary rounded-lg hover:bg-surface transition-all"
                 >
-                  <Link
-                    href={link.href}
-                    className="block text-subtle hover:text-white text-base font-medium py-1 transition-colors"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
+                  {label}
+                </Link>
               ))}
-              <div className="pt-2 flex flex-col gap-2">
-                {user ? (
-                  <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-                    <Button className="w-full">Dashboard</Button>
+              <div className="pt-2 border-t border-border flex flex-col gap-2">
+                {token ? (
+                  <Link href="/dashboard" onClick={() => setOpen(false)}>
+                    <Button className="w-full" size="sm" variant="secondary">Dashboard</Button>
                   </Link>
                 ) : (
                   <>
-                    <Link href="/auth/login" onClick={() => setMenuOpen(false)}>
-                      <Button variant="outline" className="w-full">Sign in</Button>
+                    <Link href="/auth/login" onClick={() => setOpen(false)}>
+                      <Button className="w-full" size="sm" variant="secondary">Sign in</Button>
                     </Link>
-                    <Link href="/auth/register" onClick={() => setMenuOpen(false)}>
-                      <Button className="w-full">Get started →</Button>
+                    <Link href="/auth/register" onClick={() => setOpen(false)}>
+                      <Button className="w-full" size="sm">Get started</Button>
                     </Link>
                   </>
                 )}
@@ -149,6 +125,6 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </header>
   );
 }
