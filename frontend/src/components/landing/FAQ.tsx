@@ -1,108 +1,99 @@
 "use client";
 
-import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import { Plus, Minus } from "lucide-react";
 
-const faqs = [
+const FAQS = [
   {
-    q: "Is AvaRamp custodial?",
-    a: "No. AvaRamp generates a fresh wallet per payment and stores the encrypted private key only long enough to monitor for deposits. Once the payment is confirmed and settled, the key serves no further purpose. AvaRamp never pools or holds merchant funds.",
+    q: "What currencies does AvaRamp support?",
+    a: "We currently support KES (Kenya Shilling), NGN (Nigerian Naira), GHS (Ghanaian Cedi), TZS (Tanzanian Shilling), and UGX (Ugandan Shilling). Settlement goes directly to M-Pesa, MTN Money, and Airtel Money depending on the country.",
   },
   {
-    q: "Which blockchains and tokens are supported?",
-    a: "Currently AvaRamp supports USDC on the Avalanche C-Chain (chainId 43114). The USDC contract address is 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6C. Support for additional tokens and chains is planned.",
+    q: "How long does settlement take?",
+    a: "Typically under 2 minutes. Avalanche C-Chain finalizes in ~2 seconds. Once confirmed on-chain, we immediately trigger the M-Pesa B2C transfer via Daraja. The M-Pesa push notification arrives within seconds of the blockchain confirmation.",
   },
   {
-    q: "How quickly do merchants receive their fiat?",
-    a: "On average under 2 minutes. Avalanche C-Chain has sub-second finality and the Glacier API detects confirmations quickly. The M-Pesa B2C disbursement typically completes in 30–90 seconds after that.",
+    q: "Do I need to KYC to start?",
+    a: "No KYC is required to create an account, generate your first API key, and test with small amounts on mainnet. For higher volume merchants, we'll reach out for a brief onboarding. This keeps the developer experience frictionless.",
   },
   {
-    q: "What fiat currencies and settlement rails are supported?",
-    a: "AvaRamp supports KES (Kenya), NGN (Nigeria), GHS (Ghana), TZS (Tanzania), and UGX (Uganda). Settlement is via M-Pesa B2C to the merchant's registered till number. Additional rails (Airtel, bank transfer) are on the roadmap.",
+    q: "What happens if the USDC doesn't arrive?",
+    a: "Payments have a configurable expiry window (default 30 minutes). If no deposit is detected within that window, the payment transitions to EXPIRED and we fire a payment.expired webhook. The deposit address is monitored until expiry.",
   },
   {
-    q: "How are exchange rates determined?",
-    a: "AvaRamp fetches live USD-to-fiat exchange rates from Frankfurter (an open ECB data feed) every 5 minutes. The rate is locked at payment creation time and displayed to the merchant so there are no surprises at settlement.",
+    q: "How do I verify webhook signatures?",
+    a: "Every webhook POST includes an X-Webhook-Signature header. It's an HMAC-SHA256 of the raw request body using your merchant's webhook secret. Verify it in two lines: compute HMAC with your secret and compare with the header value.",
   },
   {
-    q: "Do I need to write smart contracts to integrate?",
-    a: "No. The AvaRamp REST API handles all on-chain interaction. You POST to /payments, receive a deposit address, show it to your customer, and wait for the payment.settled webhook. No blockchain knowledge required.",
-  },
-  {
-    q: "What happens if a payment expires?",
-    a: "Payments have a 30-minute expiry window. If no deposit is detected within that time, the payment is marked EXPIRED. If a deposit arrives after expiry, AvaRamp will still detect it and can trigger a manual settlement or refund.",
+    q: "Is AvaRamp non-custodial?",
+    a: "Yes. Each payment generates a unique HD wallet address derived from your mnemonic. Private keys are AES-256-GCM encrypted before storage. We initiate the M-Pesa transfer and the USDC moves in one flow — we never hold funds on your behalf.",
   },
 ];
 
 export default function FAQ() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, margin: "-60px" });
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="relative py-28 overflow-hidden" ref={ref}>
-      <div className="max-w-3xl mx-auto px-6">
+    <section ref={ref} className="py-20 border-t border-border">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.4 }}
+          className="mb-10"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Frequently asked
-            <span className="text-gradient"> questions</span>
+          <h2 className="text-3xl font-bold text-primary tracking-tight mb-3">
+            Common questions
           </h2>
-          <p className="text-subtle text-lg">
-            Everything you need to know about AvaRamp.
+          <p className="text-secondary">
+            Anything else?{" "}
+            <a href="mailto:hello@avaramp.io" className="text-indigo-DEFAULT hover:underline">
+              Email us
+            </a>
           </p>
         </motion.div>
 
-        <div className="space-y-3">
-          {faqs.map((faq, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 16 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
-              className={`bg-card border rounded-2xl overflow-hidden transition-all duration-300 ${
-                open === i ? "border-accent/30" : "border-border hover:border-muted"
-              }`}
-            >
-              <button
-                className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 group"
-                onClick={() => setOpen(open === i ? null : i)}
+        <div className="divide-y divide-border">
+          {FAQS.map(({ q, a }, i) => {
+            const isOpen = open === i;
+            return (
+              <motion.div
+                key={q}
+                initial={{ opacity: 0 }}
+                animate={inView ? { opacity: 1 } : {}}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
               >
-                <span className="text-white font-medium text-base">{faq.q}</span>
-                <motion.div
-                  animate={{ rotate: open === i ? 45 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-colors duration-200 ${
-                    open === i
-                      ? "bg-accent/15 border-accent/30 text-accent"
-                      : "bg-surface border-border text-subtle group-hover:border-muted"
-                  }`}
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="w-full flex items-start justify-between gap-4 py-4 text-left group"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                </motion.div>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <div className="px-6 pb-6 text-subtle text-sm leading-relaxed border-t border-border pt-4">
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+                  <span className={`text-sm font-medium transition-colors ${isOpen ? "text-indigo-DEFAULT" : "text-primary group-hover:text-primary/90"}`}>
+                    {q}
+                  </span>
+                  <span className="shrink-0 mt-0.5 text-muted">
+                    {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  </span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="body"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-sm text-secondary leading-relaxed pb-4">{a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
