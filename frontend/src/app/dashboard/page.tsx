@@ -1,196 +1,142 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  DollarSign, ArrowUpRight, Clock, CheckCircle,
-  Zap, TrendingUp,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeftRight, CheckCircle, Clock, DollarSign, Plus } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
 import StatsCard from "@/components/dashboard/StatsCard";
-import { paymentsApi } from "@/lib/api";
-import { formatCurrency, formatDate, statusColor } from "@/lib/utils";
+import CreatePaymentModal from "@/components/dashboard/CreatePaymentModal";
 import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import { SkeletonTable } from "@/components/ui/Skeleton";
+import { paymentsApi } from "@/lib/api";
+import { formatCurrency, formatDate, truncateAddress } from "@/lib/utils";
 
-const mockChart = [
-  { date: "Mar 23", volume: 1200 },
-  { date: "Mar 24", volume: 1850 },
-  { date: "Mar 25", volume: 980 },
-  { date: "Mar 26", volume: 2400 },
-  { date: "Mar 27", volume: 1760 },
-  { date: "Mar 28", volume: 3100 },
-  { date: "Mar 29", volume: 2780 },
+// Chart placeholder — replace with real aggregated data from a future /analytics endpoint
+const CHART = [
+  { d: "Mar 29", v: 980  },
+  { d: "Mar 30", v: 1540 },
+  { d: "Mar 31", v: 1120 },
+  { d: "Apr 1",  v: 2200 },
+  { d: "Apr 2",  v: 1760 },
+  { d: "Apr 3",  v: 2800 },
+  { d: "Apr 4",  v: 2480 },
 ];
 
-export default function DashboardPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["payments", "recent"],
-    queryFn: () => paymentsApi.list({ limit: 5 }),
+export default function OverviewPage() {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["payments"],
+    queryFn: () => paymentsApi.list({ limit: 8 }),
     staleTime: 30_000,
   });
 
-  const payments: any[] = data?.data?.data ?? [];
+  const payments: any[] = data?.data?.data ?? data?.data ?? [];
+  const settled  = payments.filter((p) => p.status === "SETTLED").length;
+  const pending  = payments.filter((p) => p.status === "PENDING").length;
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-5 md:p-7 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Overview</h1>
-        <p className="text-subtle text-sm mt-1">Your payment activity at a glance</p>
-      </div>
-
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          label="Total Volume"
-          value="$12,480"
-          sub="USDC received"
-          icon={DollarSign}
-          trend={{ value: 18, label: "this week" }}
-          accent
-          delay={0}
-        />
-        <StatsCard
-          label="Payments"
-          value="84"
-          sub="all time"
-          icon={ArrowUpRight}
-          trend={{ value: 7, label: "vs last week" }}
-          delay={0.05}
-        />
-        <StatsCard
-          label="Pending"
-          value="3"
-          sub="awaiting deposit"
-          icon={Clock}
-          delay={0.1}
-        />
-        <StatsCard
-          label="Settled"
-          value="79"
-          sub="via M-Pesa"
-          icon={CheckCircle}
-          trend={{ value: 12, label: "vs last week" }}
-          delay={0.15}
-        />
-      </div>
-
-      {/* Chart + Recent */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Volume chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-card border border-border rounded-2xl p-5"
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-primary">Overview</h1>
+          <p className="text-sm text-muted mt-0.5">Payment activity at a glance</p>
+        </div>
+        <Button
+          size="sm"
+          icon={<Plus className="w-3.5 h-3.5" />}
+          onClick={() => setModalOpen(true)}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-white font-semibold text-sm">Payment Volume</h2>
-              <p className="text-muted text-xs mt-0.5">Last 7 days (USD)</p>
-            </div>
-            <div className="flex items-center gap-1.5 text-accent text-xs font-medium bg-accent/10 px-2.5 py-1 rounded-full">
-              <TrendingUp className="w-3 h-3" />
-              +18%
-            </div>
+          New payment
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatsCard label="Total payments"  value={String(payments.length)} icon={ArrowLeftRight} />
+        <StatsCard label="Settled"         value={String(settled)}         icon={CheckCircle}    trend={{ value: 12, label: "vs last week" }} />
+        <StatsCard label="Pending"         value={String(pending)}         icon={Clock}          />
+        <StatsCard label="Est. volume"     value="$2,480"                  icon={DollarSign}     sub="last 7 days" trend={{ value: 8, label: "vs prior week" }} />
+      </div>
+
+      {/* Chart + table */}
+      <div className="grid lg:grid-cols-[1fr_400px] gap-5">
+        {/* Volume chart */}
+        <div className="bg-card border border-border rounded-xl p-4">
+          <div className="mb-4">
+            <p className="text-sm font-medium text-primary">Payment volume</p>
+            <p className="text-xs text-muted">Last 7 days (USD)</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={mockChart}>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={CHART} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c5cff" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7c5cff" stopOpacity={0} />
+                  <stop offset="5%"  stopColor="#7c6ff7" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#7c6ff7" stopOpacity={0}   />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2a" />
-              <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#26262a" />
+              <XAxis dataKey="d" tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: "#111118", border: "1px solid #1e1e2a", borderRadius: 12, fontSize: 12 }}
-                labelStyle={{ color: "#e2e8f0" }}
-                itemStyle={{ color: "#7c5cff" }}
+                contentStyle={{ background: "#1a1a1d", border: "1px solid #26262a", borderRadius: 10, fontSize: 12 }}
+                labelStyle={{ color: "#9898a0" }}
+                itemStyle={{ color: "#7c6ff7" }}
               />
-              <Area type="monotone" dataKey="volume" stroke="#7c5cff" strokeWidth={2} fill="url(#grad)" />
+              <Area type="monotone" dataKey="v" name="Volume" stroke="#7c6ff7" strokeWidth={2} fill="url(#grad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
-        </motion.div>
-
-        {/* Quick actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3"
-        >
-          <h2 className="text-white font-semibold text-sm mb-1">Quick Actions</h2>
-          {[
-            { icon: Zap, label: "New payment link", desc: "Generate a USDC payment", href: "/dashboard/payments" },
-            { icon: ArrowUpRight, label: "View merchants", desc: "Manage your merchant accounts", href: "/dashboard/merchants" },
-            { icon: CheckCircle, label: "Settlements", desc: "Track M-Pesa payouts", href: "/dashboard/payments" },
-          ].map(({ icon: Icon, label, desc, href }) => (
-            <a key={label} href={href}
-              className="flex items-center gap-3 p-3 rounded-xl bg-surface hover:bg-surface/70 transition-colors group"
-            >
-              <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center text-accent shrink-0">
-                <Icon className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-white text-xs font-medium group-hover:text-accent transition-colors">{label}</div>
-                <div className="text-muted text-xs truncate">{desc}</div>
-              </div>
-            </a>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Recent payments */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-card border border-border rounded-2xl"
-      >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-white font-semibold text-sm">Recent Payments</h2>
-          <a href="/dashboard/payments" className="text-accent text-xs hover:text-accent-light transition-colors">
-            View all →
-          </a>
         </div>
 
-        {isLoading ? (
-          <div className="p-8 text-center text-muted text-sm">Loading…</div>
-        ) : payments.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="text-muted text-sm mb-1">No payments yet</div>
-            <div className="text-xs text-muted/60">Create your first payment to get started</div>
+        {/* Recent payments */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <p className="text-sm font-medium text-primary">Recent</p>
+            <a href="/dashboard/payments" className="text-xs text-indigo-DEFAULT hover:underline">View all</a>
           </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {payments.map((p: any) => (
-              <div key={p.id} className="flex items-center gap-4 px-6 py-3.5">
-                <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                  <DollarSign className="w-4 h-4 text-accent" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white text-sm font-medium truncate">
-                    {p.reference ?? p.id.slice(0, 8)}
+
+          {isLoading ? (
+            <SkeletonTable rows={6} cols={3} />
+          ) : payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+              <ArrowLeftRight className="w-8 h-8 text-border mb-3" strokeWidth={1} />
+              <p className="text-sm text-secondary mb-1">No payments yet</p>
+              <p className="text-xs text-muted mb-4">Create your first payment to get started</p>
+              <Button size="sm" icon={<Plus className="w-3.5 h-3.5" />} onClick={() => setModalOpen(true)}>
+                New payment
+              </Button>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {payments.slice(0, 7).map((p: any) => (
+                <div key={p.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-primary truncate">
+                      {p.reference || truncateAddress(p.id, 8)}
+                    </p>
+                    <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
                   </div>
-                  <div className="text-muted text-xs">{formatDate(p.createdAt)}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-white text-sm font-semibold">
-                    {formatCurrency(p.amount, "USD")}
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
                   </div>
                   <Badge status={p.status} />
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <CreatePaymentModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={refetch}
+      />
     </div>
   );
 }
