@@ -1,84 +1,60 @@
 import Link from "next/link";
-import { Zap, Twitter, Github, Linkedin } from "lucide-react";
+import { Zap, Github, Twitter } from "lucide-react";
 
-const links = {
+const LINKS = {
   Product: [
-    { label: "How It Works",   href: "/#how-it-works" },
-    { label: "Features",       href: "/#features" },
-    { label: "Currencies",     href: "/#currencies" },
-    { label: "Pricing",        href: "/#pricing" },
+    { label: "Features",    href: "#features" },
+    { label: "Pricing",     href: "#pricing" },
+    { label: "Changelog",   href: "/changelog" },
+    { label: "Status",      href: "/status" },
   ],
   Developers: [
-    { label: "Documentation",  href: "/docs" },
-    { label: "API Reference",  href: "/docs/api" },
-    { label: "GitHub",         href: "https://github.com" },
-    { label: "Changelog",      href: "/changelog" },
+    { label: "API Reference", href: "/docs/api" },
+    { label: "Quickstart",    href: "/docs/quickstart" },
+    { label: "SDKs",          href: "/docs/sdks" },
+    { label: "Webhooks",      href: "/docs/webhooks" },
   ],
   Company: [
-    { label: "About",          href: "/about" },
-    { label: "Blog",           href: "/blog" },
-    { label: "Careers",        href: "/careers" },
-    { label: "Contact",        href: "/contact" },
+    { label: "About",   href: "/about" },
+    { label: "Blog",    href: "/blog" },
+    { label: "Careers", href: "/careers" },
+    { label: "Contact", href: "/contact" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Use",   href: "/terms" },
-    { label: "Cookie Policy",  href: "/cookies" },
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms",   href: "/terms" },
+    { label: "Cookies", href: "/cookies" },
   ],
 };
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-border overflow-hidden">
-      {/* Glow blobs */}
-      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-accent/8 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-accent-2/6 rounded-full blur-[100px] pointer-events-none" />
-
-      <div className="relative max-w-7xl mx-auto px-6 pt-16 pb-8">
-        {/* Top row */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
+    <footer className="border-t border-border bg-bg">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        {/* Top: brand + links */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2.5 mb-4 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-2 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" fill="white" />
+            <Link href="/" className="inline-flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-indigo-DEFAULT flex items-center justify-center">
+                <Zap className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-white font-semibold text-base">
-                Ava<span className="text-gradient-purple">Ramp</span>
-              </span>
+              <span className="font-semibold text-sm text-primary">AvaRamp</span>
             </Link>
-            <p className="text-subtle text-sm leading-relaxed mb-6 max-w-[200px]">
-              Crypto-to-fiat settlement for the African economy. Built on Avalanche.
+            <p className="text-xs text-muted leading-relaxed max-w-[160px]">
+              Crypto-to-fiat payments for Africa. USDC → M-Pesa in minutes.
             </p>
-            <div className="flex items-center gap-3">
-              {[
-                { Icon: Twitter,  href: "#" },
-                { Icon: Github,   href: "#" },
-                { Icon: Linkedin, href: "#" },
-              ].map(({ Icon, href }, i) => (
-                <a
-                  key={i}
-                  href={href}
-                  className="w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center text-subtle hover:text-white hover:border-accent/40 transition-all duration-200"
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Link columns */}
-          {Object.entries(links).map(([category, items]) => (
-            <div key={category}>
-              <h4 className="text-white text-sm font-semibold mb-4">{category}</h4>
-              <ul className="space-y-2.5">
-                {items.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-subtle hover:text-white text-sm transition-colors duration-200"
-                    >
-                      {item.label}
+          {Object.entries(LINKS).map(([title, items]) => (
+            <div key={title}>
+              <p className="text-xs font-semibold text-secondary mb-3 uppercase tracking-wider">{title}</p>
+              <ul className="space-y-2">
+                {items.map(({ label, href }) => (
+                  <li key={label}>
+                    <Link href={href} className="text-xs text-muted hover:text-secondary transition-colors">
+                      {label}
                     </Link>
                   </li>
                 ))}
@@ -87,14 +63,20 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom row */}
-        <div className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-muted text-xs">
-            © {new Date().getFullYear()} AvaRamp. All rights reserved. Not a bank. Crypto services facilitated through Avalanche C-Chain.
+        {/* Bottom */}
+        <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted">
+            © {new Date().getFullYear()} AvaRamp. Built for Africa&apos;s builders.
           </p>
-          <div className="flex items-center gap-1.5">
-            <div className="glow-dot" />
-            <span className="text-accent-2 text-xs font-medium">All systems operational</span>
+          <div className="flex items-center gap-3">
+            <a href="https://github.com" target="_blank" rel="noreferrer"
+               className="text-muted hover:text-secondary transition-colors">
+              <Github className="w-4 h-4" />
+            </a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer"
+               className="text-muted hover:text-secondary transition-colors">
+              <Twitter className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </div>
