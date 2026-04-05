@@ -7,6 +7,7 @@ import userRoutes       from "./Modules/users/user.routes";
 import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
+import mpesaRoutes      from "./Modules/Settlements/mpesa.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
 import { logger }       from "./shared/Utils/Logger";
 
@@ -15,6 +16,8 @@ const app = express();
 // ── Global middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors());
+// M-Pesa sends raw bodies — parse before our JSON middleware for that path
+app.use("/mpesa", express.json());
 app.use(express.json());
 app.use(apiLimiter);
 
@@ -28,6 +31,8 @@ app.use("/users",       userRoutes);
 app.use("/merchants",   merchantRoutes);
 app.use("/payments",    paymentRoutes);
 app.use("/settlements", settlementRoutes);
+// M-Pesa Daraja callback endpoints (no auth — Safaricom calls these)
+app.use("/mpesa",       mpesaRoutes);
 
 // ── Global error handler ────────────────────────────────────────────────────
 app.use((err: any, req: any, res: any, _next: any) => {
