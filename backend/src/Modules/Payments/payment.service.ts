@@ -59,6 +59,8 @@ export class PaymentService {
       paymentId:      payment.id,
       depositAddress: payment.depositAddress,
       amountUsdc:     payment.amountUsdc,
+      fiatAmount:     payment.amountFiat,
+      currency:       payment.fiatCurrency,
       expiresAt:      payment.expiresAt,
       network:        "avalanche",
       token:          "USDC",
@@ -68,8 +70,25 @@ export class PaymentService {
   async getPayment(id: string) {
     const payment = await repo.findById(id);
     if (!payment) throw new NotFoundError("Payment");
-    // Never expose the encrypted private key
     const { depositPk: _pk, ...safe } = payment as any;
     return safe;
+  }
+
+  async listPayments(filters: {
+    merchantId?: string;
+    userId?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }) {
+    const { PaymentStatus } = await import("@prisma/client");
+    const status = filters.status && (PaymentStatus as any)[filters.status]
+      ? (PaymentStatus as any)[filters.status]
+      : undefined;
+    return repo.list({ ...filters, status });
+  }
+
+  async getAnalyticsSummary(merchantId?: string) {
+    return repo.getAnalyticsSummary(merchantId);
   }
 }
