@@ -1,64 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Webhook } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Webhook, RefreshCw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { usersApi } from "@/lib/api";
+import { SkeletonTable } from "@/components/ui/Skeleton";
 
-const DELIVERIES = [
-  {
-    id: "wh_01",
-    event: "payment.settled",
-    statusCode: 200,
-    status: "SUCCESS",
-    attempts: 1,
-    duration: 138,
-    createdAt: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    payload: { event: "payment.settled", paymentId: "pay_abc123", fiatAmount: "5000", currency: "KES", mpesaReceipt: "NLJ7RT61SV" },
-  },
-  {
-    id: "wh_02",
-    event: "payment.confirmed",
-    statusCode: 200,
-    status: "SUCCESS",
-    attempts: 1,
-    duration: 92,
-    createdAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-    payload: { event: "payment.confirmed", paymentId: "pay_abc123", amountUsdc: "3.82", confirmedAt: new Date().toISOString() },
-  },
-  {
-    id: "wh_03",
-    event: "payment.confirmed",
-    statusCode: 500,
-    status: "FAILED",
-    attempts: 3,
-    duration: 5000,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    payload: { event: "payment.confirmed", paymentId: "pay_xyz789" },
-  },
-  {
-    id: "wh_04",
-    event: "payment.expired",
-    statusCode: null,
-    status: "PENDING",
-    attempts: 0,
-    duration: null,
-    createdAt: new Date(Date.now() - 45 * 1000).toISOString(),
-    payload: { event: "payment.expired", paymentId: "pay_def456" },
-  },
-];
+type Delivery = {
+  id: string;
+  event: string;
+  status: string;
+  error?: string | null;
+  sentAt: string;
+  payment?: { id: string; merchantId: string; fiatCurrency: string };
+};
 
-type Delivery = typeof DELIVERIES[0];
-
-const STATUS = {
-  SUCCESS: { icon: CheckCircle, text: "text-green-DEFAULT",  bg: "bg-green-dim" },
-  FAILED:  { icon: XCircle,     text: "text-red-DEFAULT",    bg: "bg-red-dim"   },
-  PENDING: { icon: Clock,       text: "text-amber-DEFAULT",  bg: "bg-amber-dim" },
+const STATUS_MAP = {
+  delivered: { icon: CheckCircle, text: "text-green-DEFAULT",  bg: "bg-green-dim",  label: "Delivered" },
+  failed:    { icon: XCircle,     text: "text-red-DEFAULT",    bg: "bg-red-dim",    label: "Failed"    },
+  pending:   { icon: Clock,       text: "text-amber-DEFAULT",  bg: "bg-amber-dim",  label: "Pending"   },
 };
 
 function DeliveryRow({ d }: { d: Delivery }) {
   const [open, setOpen] = useState(false);
-  const s = STATUS[d.status as keyof typeof STATUS] ?? STATUS.PENDING;
+  const key = d.status as keyof typeof STATUS_MAP;
+  const s   = STATUS_MAP[key] ?? STATUS_MAP.pending;
   const Icon = s.icon;
 
   return (
@@ -71,28 +39,34 @@ function DeliveryRow({ d }: { d: Delivery }) {
           <Icon className={cn("w-3.5 h-3.5", s.text)} />
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-xs font-medium text-primary">{d.event}</span>
-          {d.statusCode && (
-            <span className={cn("ml-2 text-2xs px-1.5 py-0.5 rounded", s.bg, s.text)}>
-              {d.statusCode}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-primary">{d.event}</span>
+            <span className={cn("text-2xs px-1.5 py-0.5 rounded font-medium", s.bg, s.text)}>
+              {s.label}
             </span>
-          )}
-          <p className="text-2xs text-muted mt-0.5 truncate">{formatDate(d.createdAt)}</p>
+          </div>
+          <p className="text-2xs text-muted mt-0.5">{formatDate(d.sentAt)}</p>
         </div>
         <div className="text-right shrink-0 mr-2">
-          {d.duration && <p className="text-2xs text-muted">{d.duration}ms</p>}
-          {d.attempts > 1 && <p className="text-2xs text-amber-DEFAULT">{d.attempts} attempts</p>}
+          {d.payment && (
+            <p className="text-2xs text-muted font-mono">{d.payment.id.slice(0, 8)}…</p>
+          )}
         </div>
         <div className="text-muted shrink-0">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </button>
       {open && (
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-4 space-y-2">
+          {d.error && (
+            <div className="bg-red-dim border border-red-DEFAULT/20 rounded-lg px-3 py-2 text-xs text-red-DEFAULT">
+              Error: {d.error}
+            </div>
+          )}
           <div className="bg-surface border border-border rounded-lg p-3">
-            <p className="text-2xs text-muted uppercase tracking-wider mb-2 font-semibold">Payload</p>
+            <p className="text-2xs text-muted uppercase tracking-wider mb-2 font-semibold">Delivery details</p>
             <pre className="text-xs font-mono text-indigo-DEFAULT leading-relaxed overflow-x-auto">
-              {JSON.stringify(d.payload, null, 2)}
+              {JSON.stringify({ id: d.id, event: d.event, status: d.status, sentAt: d.sentAt, paymentId: d.payment?.id }, null, 2)}
             </pre>
           </div>
         </div>
@@ -102,22 +76,38 @@ function DeliveryRow({ d }: { d: Delivery }) {
 }
 
 export default function WebhooksPage() {
-  const success = DELIVERIES.filter((d) => d.status === "SUCCESS").length;
-  const failed  = DELIVERIES.filter((d) => d.status === "FAILED").length;
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["webhooks"],
+    queryFn:  () => usersApi.webhooks({ limit: 100 }),
+    staleTime: 30_000,
+  });
+
+  const deliveries: Delivery[] = data?.data?.data?.deliveries ?? [];
+  const total     = data?.data?.data?.total ?? 0;
+  const success   = deliveries.filter((d) => d.status === "delivered").length;
+  const failed    = deliveries.filter((d) => d.status === "failed").length;
 
   return (
     <div className="p-5 md:p-7 space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-primary">Webhooks</h1>
-        <p className="text-sm text-muted mt-0.5">Delivery log for all event notifications</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-primary">Webhooks</h1>
+          <p className="text-sm text-muted mt-0.5">Delivery log for all event notifications</p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="w-8 h-8 rounded-lg bg-card border border-border text-muted hover:text-secondary flex items-center justify-center transition-colors"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Total",      value: DELIVERIES.length, color: "text-primary"       },
-          { label: "Successful", value: success,            color: "text-green-DEFAULT" },
-          { label: "Failed",     value: failed,             color: "text-red-DEFAULT"   },
+          { label: "Total",      value: total,   color: "text-primary"       },
+          { label: "Delivered",  value: success, color: "text-green-DEFAULT" },
+          { label: "Failed",     value: failed,  color: "text-red-DEFAULT"   },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-card border border-border rounded-xl p-4 text-center">
             <div className={cn("text-2xl font-bold tracking-tight", color)}>{value}</div>
@@ -128,18 +118,33 @@ export default function WebhooksPage() {
 
       {/* Log */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-3 border-b border-border">
-          <Webhook className="w-4 h-4 text-secondary" strokeWidth={1.5} />
-          <span className="text-sm font-medium text-primary">Delivery log</span>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Webhook className="w-4 h-4 text-secondary" strokeWidth={1.5} />
+            <span className="text-sm font-medium text-primary">Delivery log</span>
+          </div>
+          {total > 0 && <span className="text-xs text-muted">{total} total</span>}
         </div>
-        {DELIVERIES.map((d) => <DeliveryRow key={d.id} d={d} />)}
+
+        {isLoading ? (
+          <SkeletonTable rows={5} cols={3} />
+        ) : deliveries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Webhook className="w-8 h-8 text-border mb-3" strokeWidth={1} />
+            <p className="text-sm text-secondary mb-1">No deliveries yet</p>
+            <p className="text-xs text-muted">Webhook events appear here once payments are processed</p>
+          </div>
+        ) : (
+          deliveries.map((d) => <DeliveryRow key={d.id} d={d} />)
+        )}
       </div>
 
-      {/* Info */}
+      {/* Docs */}
       <div className="bg-card border border-border rounded-xl p-4 text-xs text-secondary leading-relaxed">
         <strong className="text-primary block mb-1">Signature verification</strong>
-        Verify <code className="text-indigo-DEFAULT font-mono">X-Webhook-Signature</code> on every request:
-        compute <code className="text-indigo-DEFAULT font-mono">HMAC-SHA256(rawBody, webhookSecret)</code> and compare.
+        Every delivery includes an <code className="text-indigo-DEFAULT font-mono">X-AvaRamp-Signature</code> header.
+        Verify it server-side: <code className="text-indigo-DEFAULT font-mono">HMAC-SHA256(rawBody, webhookSecret)</code>.
+        Compare with the header value (format: <code className="text-indigo-DEFAULT font-mono">sha256=…</code>).
         Failed deliveries are retried up to 3 times with exponential backoff.
       </div>
     </div>
