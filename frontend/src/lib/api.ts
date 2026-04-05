@@ -13,7 +13,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Surface error messages
+// Surface backend error messages
 api.interceptors.response.use(
   (r) => r,
   (err) => {
@@ -35,13 +35,16 @@ export const authApi = {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const usersApi = {
-  me: () => api.get("/users/me"),
+  me:          ()           => api.get("/users/me"),
+  update:      (data: unknown) => api.patch("/users/me", data),
+  webhooks:    (params?: { limit?: number; offset?: number }) =>
+    api.get("/users/me/webhooks", { params }),
 };
 
 // ── Merchants ─────────────────────────────────────────────────────────────────
 export const merchantsApi = {
   create: (data: unknown) => api.post("/merchants", data),
-  get:    (id: string)     => api.get(`/merchants/${id}`),
+  get:    (id: string)    => api.get(`/merchants/${id}`),
 };
 
 // ── Payments ──────────────────────────────────────────────────────────────────
@@ -50,8 +53,15 @@ export const paymentsApi = {
     api.post("/payments", data, {
       headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {},
     }),
-  get:    (id: string)  => api.get(`/payments/${id}`),
-  list:   (params?: unknown) => api.get("/payments", { params }),
+  get:  (id: string)      => api.get(`/payments/${id}`),
+  list: (params?: {
+    status?:     string;
+    merchantId?: string;
+    limit?:      number;
+    offset?:     number;
+  }) => api.get("/payments", { params }),
+  analytics: (params?: { merchantId?: string }) =>
+    api.get("/payments/analytics", { params }),
 };
 
 // ── Settlements ───────────────────────────────────────────────────────────────
