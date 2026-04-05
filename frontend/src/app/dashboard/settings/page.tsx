@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Eye, EyeOff, Copy, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
+import { usersApi } from "@/lib/api";
 import Button from "@/components/ui/Button";
 
 // ── Profile form ──────────────────────────────────────────────────────────────
@@ -70,12 +71,12 @@ function Toggle({ label, sub, defaultOn }: { label: string; sub: string; default
 }
 
 export default function SettingsPage() {
-  const { user } = useAuthStore();
+  const { user, setAuth, token } = useAuthStore();
   const [showKey, setShowKey] = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
 
-  // Deterministic fake key scoped to session — replace with real GET /users/me/api-key
-  const apiKey = `avr_live_${"a1b2c3d4e5f6g7h8i9j0".repeat(2).slice(0, 32)}`;
+  // API key is derived from user id — in production expose a real key management endpoint
+  const apiKey = `avr_live_${user?.id?.replace(/-/g, "").padEnd(32, "0").slice(0, 32) ?? "00000000000000000000000000000000"}`;
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -83,6 +84,17 @@ export default function SettingsPage() {
   });
 
   const passwordForm = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
+
+  const onProfileSave = async (data: ProfileForm) => {
+    try {
+      const res = await usersApi.update({ email: data.email, phone: data.phone });
+      const updated = res.data.data;
+      if (user && token) setAuth({ ...user, ...updated }, token);
+      toast.success("Profile saved");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save profile");
+    }
+  };
 
   const copyKey = () => {
     navigator.clipboard.writeText(apiKey);
@@ -100,7 +112,7 @@ export default function SettingsPage() {
 
       {/* Profile */}
       <Section title="Profile">
-        <form onSubmit={profileForm.handleSubmit(() => toast.success("Profile saved"))}>
+        <form onSubmit={profileForm.handleSubmit(onProfileSave)}>
           <Field label="Email" sub="Used for login and notifications">
             <input {...profileForm.register("email")} type="email" className="input" />
             {profileForm.formState.errors.email && (
