@@ -11,19 +11,29 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import CreatePaymentModal from "@/components/dashboard/CreatePaymentModal";
 
 const STATUSES = ["ALL", "PENDING", "CONFIRMED", "SETTLED", "EXPIRED", "FAILED"];
+const PAGE_SIZE = 20;
 
 export default function PaymentsPage() {
   const [search, setSearch]       = useState("");
   const [status, setStatus]       = useState("ALL");
+  const [page, setPage]           = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["payments", status],
-    queryFn: () => paymentsApi.list(status !== "ALL" ? { status } : {}),
+    queryKey: ["payments", status, page],
+    queryFn: () => paymentsApi.list({
+      ...(status !== "ALL" && { status }),
+      limit:  PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    }),
     staleTime: 30_000,
+    placeholderData: (prev: any) => prev,
   });
 
-  const payments: any[] = data?.data?.data ?? data?.data ?? [];
+  const result   = (data as any)?.data?.data;
+  const payments: any[] = result?.payments ?? [];
+  const total    = result?.total ?? payments.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const filtered = payments.filter((p) => {
     if (!search) return true;
@@ -135,6 +145,34 @@ export default function PaymentsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && !search && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              size="xs"
+              variant="secondary"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Prev
+            </Button>
+            <span className="text-xs text-muted px-1">{page + 1} / {totalPages}</span>
+            <Button
+              size="xs"
+              variant="secondary"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next →
+            </Button>
+          </div>
+        </div>
+      )}
 
       <CreatePaymentModal
         open={modalOpen}
