@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap, Github, Twitter } from "lucide-react";
+import { Zap } from "lucide-react";
 
 const LINKS = {
   Product: [
@@ -69,14 +69,10 @@ export default function Footer() {
             © {new Date().getFullYear()} AvaRamp. Built for Africa&apos;s builders.
           </p>
           <div className="flex items-center gap-3">
-            <a href="https://github.com" target="_blank" rel="noreferrer"
-               className="text-muted hover:text-secondary transition-colors">
-              <Github className="w-4 h-4" />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer"
-               className="text-muted hover:text-secondary transition-colors">
-              <Twitter className="w-4 h-4" />
-            </a>
+            <a href="https://github.com/JosephNjorog/Avaramp" target="_blank" rel="noreferrer"
+               className="text-xs text-muted hover:text-secondary transition-colors">GitHub</a>
+            <a href="https://x.com/avaramp" target="_blank" rel="noreferrer"
+               className="text-xs text-muted hover:text-secondary transition-colors">X / Twitter</a>
           </div>
         </div>
       </div>
