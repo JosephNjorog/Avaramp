@@ -43,6 +43,8 @@ model Payment {
   amountUsdc      String
   amountFiat      String
   fiatCurrency    String
+  phone           String?
+  reference       String?
   depositAddress  String          @unique
   depositPk       String
   status          PaymentStatus   @default(PENDING)
