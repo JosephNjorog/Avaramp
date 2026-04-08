@@ -30,7 +30,7 @@ interface PlanProps {
 function PlanCard({ name, badge, fee, subFee, description, features, cta, href, highlighted }: PlanProps) {
   return (
     <div className={cn(
-      "relative flex flex-col rounded-2xl border p-8",
+      "relative flex flex-col rounded-2xl border p-6 sm:p-8",
       highlighted
         ? "bg-indigo-DEFAULT/10 border-indigo-border shadow-[0_0_40px_-12px] shadow-indigo-DEFAULT/30"
         : "bg-card border-border"
@@ -95,7 +95,7 @@ export default function PricingPage() {
           </div>
 
           {/* Plans */}
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
             <PlanCard
               name="Starter"
               fee="1.5%"
@@ -246,7 +246,7 @@ export default function PricingPage() {
           </div>
 
           {/* CTA */}
-          <div className="text-center border border-indigo-border bg-indigo-dim rounded-2xl p-12">
+          <div className="text-center border border-indigo-border bg-indigo-dim rounded-2xl p-8 sm:p-12">
             <div className="w-12 h-12 rounded-2xl bg-indigo-DEFAULT flex items-center justify-center mx-auto mb-4">
               <Zap className="w-6 h-6 text-white" strokeWidth={2} />
             </div>
