@@ -8,7 +8,7 @@ import { ledger } from "../../database/ledger";
 const glacier = new GlacierService();
 
 // Avalanche USDC contract address (C-Chain mainnet)
-const USDC_ADDRESS = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6C";
+const USDC_ADDRESS = "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E";
 
 export const paymentWorker = new Worker(
   "payments",
