@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -27,18 +27,18 @@ interface Props {
 }
 
 export default function CreatePaymentModal({ open, onClose, onCreated }: Props) {
-  const [result, setResult] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
+  const [result, setResult]           = useState<any>(null);
+  const [copied, setCopied]           = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
     defaultValues: { currency: "KES" },
   });
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const onSubmit = async (data: Form) => {
@@ -55,7 +55,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
   const handleClose = () => {
     reset();
     setResult(null);
-    setCopied(false);
+    setCopied(null);
     onClose();
   };
 
@@ -70,20 +70,44 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
     >
       {result ? (
         <div className="space-y-4">
+          {/* Customer payment link — the main thing to share */}
+          <div className="bg-indigo-dim border border-indigo-border rounded-xl p-4">
+            <p className="text-xs text-muted mb-2 font-medium">Customer payment link</p>
+            <div className="flex items-center gap-2">
+              <code className="text-xs font-mono text-indigo-DEFAULT flex-1 break-all leading-relaxed">
+                {typeof window !== "undefined" ? window.location.origin : ""}/pay/{result.id}
+              </code>
+              <button
+                onClick={() => handleCopy(`${window.location.origin}/pay/${result.id}`, "link")}
+                className="text-muted hover:text-secondary transition-colors shrink-0"
+              >
+                {copied === "link" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <a
+              href={`/pay/${result.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center gap-1 text-xs text-indigo-DEFAULT hover:underline"
+            >
+              Open customer page <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
           {/* Address */}
           <div className="bg-surface border border-border rounded-xl p-4">
             <p className="text-2xs text-muted mb-2 uppercase tracking-wider font-medium">
-              Avalanche C-Chain address
+              Deposit address (Avalanche C-Chain)
             </p>
             <div className="flex items-center gap-2">
-              <code className="text-xs font-mono text-indigo-DEFAULT flex-1 break-all leading-relaxed">
+              <code className="text-xs font-mono text-primary flex-1 break-all leading-relaxed">
                 {result.depositAddress}
               </code>
               <button
-                onClick={() => handleCopy(result.depositAddress)}
+                onClick={() => handleCopy(result.depositAddress, "address")}
                 className="text-muted hover:text-secondary transition-colors shrink-0"
               >
-                {copied ? <Check className="w-4 h-4 text-green-DEFAULT" /> : <Copy className="w-4 h-4" />}
+                {copied === "address" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -91,9 +115,9 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
           {/* Details grid */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Send USDC",     value: result.amountUsdc },
-              { label: "Fiat payout",   value: `${result.fiatAmount} ${result.currency}` },
-              { label: "Network",       value: "Avalanche C" },
+              { label: "Send USDC",   value: result.amountUsdc },
+              { label: "Fiat payout", value: `${result.fiatAmount} ${result.fiatCurrency ?? result.currency}` },
+              { label: "Network",     value: "Avalanche C" },
             ].map(({ label, value }) => (
               <div key={label} className="bg-surface rounded-lg p-3">
                 <p className="text-2xs text-muted mb-1">{label}</p>
@@ -102,8 +126,8 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
             ))}
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-secondary bg-amber-dim border border-amber-DEFAULT/15 rounded-lg px-3 py-2.5">
-            Send <strong className="text-primary">exactly {result.amountUsdc} USDC</strong> to avoid rejection. Expires in 30 minutes.
+          <div className="flex items-center gap-2 text-xs text-secondary bg-amber-500/8 border border-amber-500/15 rounded-lg px-3 py-2.5">
+            Customer must send <strong className="text-primary mx-1">exactly {result.amountUsdc} USDC</strong> to avoid rejection. Link expires in 30 minutes.
           </div>
 
           <Button onClick={handleClose} variant="secondary" className="w-full">Done</Button>
