@@ -64,8 +64,8 @@ function ParamRow({ name, type, required, desc }: { name: string; type: string; 
 
 function ParamTable({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border border-border rounded-lg overflow-hidden mb-6">
-      <table className="w-full text-sm">
+    <div className="border border-border rounded-lg overflow-x-auto mb-6">
+      <table className="w-full text-sm min-w-[500px]">
         <thead>
           <tr className="bg-surface border-b border-border">
             <th className="text-left py-2 px-4 text-xs text-muted font-medium">Parameter</th>
@@ -83,8 +83,8 @@ function ParamTable({ children }: { children: React.ReactNode }) {
 
 function ParamTableRows({ rows }: { rows: { name: string; type: string; required?: boolean; desc: string }[] }) {
   return (
-    <div className="border border-border rounded-lg overflow-hidden mb-6">
-      <table className="w-full text-sm">
+    <div className="border border-border rounded-lg overflow-x-auto mb-6">
+      <table className="w-full text-sm min-w-[500px]">
         <thead>
           <tr className="bg-surface border-b border-border">
             <th className="text-left py-2 px-4 text-xs text-muted font-medium">Parameter</th>
@@ -141,8 +141,8 @@ export default function DocsPage() {
       <DocsSidebar />
 
       {/* Main content */}
-      <main className="lg:pl-60 pt-14">
-        <div className="max-w-3xl mx-auto px-6 py-12 space-y-16">
+      <main className="lg:pl-60 pt-14 overflow-x-hidden">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 space-y-16">
 
           {/* ── Overview ── */}
           <Section id="overview">
