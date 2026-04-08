@@ -6,25 +6,28 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // Class-based dark mode — we toggle "dark" on <html>
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        bg:       "#0c0c0e",
-        surface:  "#141416",
-        card:     "#1a1a1d",
-        border:   "#26262a",
-        primary:  "#f2f2f4",
-        secondary: "#9898a0",
-        muted:    "#5c5c66",
+        // All semantic tokens map to CSS variables so they flip with the theme
+        bg:       "var(--color-bg)",
+        surface:  "var(--color-surface)",
+        card:     "var(--color-card)",
+        border:   "var(--color-border)",
+        primary:  "var(--color-primary)",
+        secondary: "var(--color-secondary)",
+        muted:    "var(--color-muted)",
         indigo: {
-          DEFAULT: "#7c6ff7",
-          dim:     "#7c6ff714",
-          border:  "#7c6ff740",
+          DEFAULT: "var(--color-indigo)",
+          dim:     "var(--color-indigo-dim)",
+          border:  "var(--color-indigo-border)",
         },
-        green:  { DEFAULT: "#3dd68c", dim: "#3dd68c15" },
-        amber:  { DEFAULT: "#f5a623", dim: "#f5a62315" },
-        red:    { DEFAULT: "#f56060", dim: "#f5606015" },
-        blue:   { DEFAULT: "#60a5fa", dim: "#60a5fa15" },
+        green:  { DEFAULT: "var(--color-green)",  dim: "var(--color-green-dim)"  },
+        amber:  { DEFAULT: "var(--color-amber)",  dim: "var(--color-amber-dim)"  },
+        red:    { DEFAULT: "var(--color-red)",    dim: "var(--color-red-dim)"    },
+        blue:   { DEFAULT: "var(--color-blue)",   dim: "var(--color-blue-dim)"   },
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
@@ -58,8 +61,8 @@ const config: Config = {
         marquee:    "marquee 30s linear infinite",
       },
       boxShadow: {
-        card: "0 0 0 1px #26262a",
-        menu: "0 0 0 1px #26262a, 0 8px 24px rgba(0,0,0,0.6)",
+        card: "0 0 0 1px var(--color-border)",
+        menu: "0 0 0 1px var(--color-border), 0 8px 24px var(--shadow-menu)",
         glow: "0 0 32px rgba(124,111,247,0.2)",
       },
     },
