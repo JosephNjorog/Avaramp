@@ -33,7 +33,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative pt-28 pb-20 overflow-hidden">
+    <section className="relative pt-20 sm:pt-28 pb-16 sm:pb-20 overflow-hidden">
       {/* Subtle grid bg */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -44,7 +44,7 @@ export default function Hero() {
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-[1fr_480px] gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-10 lg:gap-12 items-center">
           {/* Left — copy */}
           <div>
             {/* Eyebrow */}
@@ -62,7 +62,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.05 }}
-              className="text-4xl sm:text-5xl font-bold text-primary leading-[1.1] tracking-tight text-balance mb-4"
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary leading-[1.15] tracking-tight text-balance mb-4"
             >
               Accept USDC.{" "}
               <span className="gradient-brand">Pay out in minutes.</span>
@@ -83,15 +83,15 @@ export default function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.15 }}
-              className="flex flex-col sm:flex-row gap-3 mb-10"
+              className="flex flex-col sm:flex-row gap-3 mb-8 sm:mb-10"
             >
-              <Link href="/auth/register">
-                <Button size="lg" iconRight={<ArrowRight className="w-4 h-4" />}>
+              <Link href="/auth/register" className="w-full sm:w-auto">
+                <Button size="lg" iconRight={<ArrowRight className="w-4 h-4" />} className="w-full sm:w-auto">
                   Start building free
                 </Button>
               </Link>
-              <Link href="/docs">
-                <Button size="lg" variant="secondary">View API docs</Button>
+              <Link href="/docs" className="w-full sm:w-auto">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto">View API docs</Button>
               </Link>
             </motion.div>
 
@@ -120,7 +120,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative"
+            className="relative overflow-hidden"
           >
             <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-menu">
               {/* Window chrome */}
@@ -185,7 +185,7 @@ export default function Hero() {
             </div>
 
             {/* Floating stats */}
-            <div className="absolute -bottom-4 -right-4 bg-card border border-border rounded-xl px-4 py-3 shadow-menu">
+            <div className="hidden sm:block absolute -bottom-4 -right-4 bg-card border border-border rounded-xl px-4 py-3 shadow-menu">
               <div className="text-xs font-semibold text-primary">$2.4M+</div>
               <div className="text-2xs text-muted">settled this month</div>
             </div>
@@ -197,7 +197,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.35 }}
-          className="mt-20 pt-8 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-6"
+          className="mt-16 lg:mt-20 pt-8 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6"
         >
           {[
             { value: "$2.4M+",  label: "Total settled"         },
