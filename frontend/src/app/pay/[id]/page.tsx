@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { paymentsApi } from "@/lib/api";
+import WalletPay from "./WalletPay";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -301,11 +302,11 @@ export default function PayPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-card border border-border rounded-2xl overflow-hidden"
             >
-              {/* QR */}
+              {/* QR — EIP-681 URI so wallets auto-fill the transaction */}
               <div className="flex flex-col items-center py-7 px-5 border-b border-border gap-4">
                 <div className="bg-white p-3 rounded-xl">
                   <QRCode
-                    value={payment.depositAddress}
+                    value={`ethereum:0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E@43114/transfer?address=${payment.depositAddress}&uint256=${Math.round(parseFloat(payment.amountUsdc) * 1_000_000)}`}
                     size={160}
                     level="M"
                     bgColor="#ffffff"
@@ -313,7 +314,7 @@ export default function PayPage() {
                   />
                 </div>
                 <p className="text-xs text-secondary text-center max-w-xs">
-                  Scan with your Avalanche wallet app or copy the address below
+                  Scan with any Avalanche wallet — transaction is pre-filled automatically
                 </p>
               </div>
 
@@ -376,8 +377,24 @@ export default function PayPage() {
                 </button>
 
                 <p className="text-center text-[11px] text-muted pb-2">
-                  Network: Avalanche C-Chain · Token: USDC (0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E)
+                  Network: Avalanche C-Chain · Token: USDC
                 </p>
+              </div>
+
+              {/* Wallet connect + pay */}
+              <div className="px-5 pb-5">
+                <div className="flex items-center gap-3 my-4">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted">or pay directly</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+                <WalletPay
+                  depositAddress={payment.depositAddress}
+                  amountUsdc={payment.amountUsdc}
+                  fiatAmount={payment.fiatAmount}
+                  fiatCurrency={payment.fiatCurrency}
+                  onSuccess={() => {/* polling will catch the state change */}}
+                />
               </div>
             </motion.div>
           )}
