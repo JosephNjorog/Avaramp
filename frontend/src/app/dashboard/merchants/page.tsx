@@ -67,7 +67,7 @@ export default function MerchantsPage() {
   };
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div className="p-4 md:p-7 space-y-5 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -91,41 +91,76 @@ export default function MerchantsPage() {
         </div>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="grid grid-cols-[1fr_1fr_120px] gap-4 px-5 py-2.5 border-b border-border">
-            {["Merchant", "Webhook secret", "Created"].map((h) => (
-              <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
-            ))}
-          </div>
-          <div className="divide-y divide-border">
+          {/* Mobile card list */}
+          <div className="sm:hidden divide-y divide-border">
             {merchants.map((m) => (
-              <div key={m.id} className="grid grid-cols-[1fr_1fr_120px] gap-4 items-center px-5 py-4">
-                <div className="min-w-0">
+              <div key={m.id} className="px-4 py-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-primary">{m.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <code className="text-2xs text-muted font-mono bg-surface px-1.5 py-0.5 rounded truncate max-w-[180px]">
-                      {m.id}
-                    </code>
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(m.id); toast.success("ID copied"); }}
-                      className="text-muted hover:text-secondary transition-colors"
-                    >
-                      <Copy className="w-3 h-3" />
-                    </button>
-                  </div>
-                  {m.webhookUrl && (
-                    <p className="text-2xs text-muted mt-1 truncate">{m.webhookUrl}</p>
-                  )}
+                  <p className="text-xs text-muted">{formatDate(m.createdAt)}</p>
                 </div>
-                <div className="min-w-0">
-                  {m.webhookSecret ? (
+                <div className="flex items-center gap-2">
+                  <code className="text-2xs text-muted font-mono bg-surface px-1.5 py-0.5 rounded truncate flex-1 min-w-0">
+                    {m.id}
+                  </code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(m.id); toast.success("ID copied"); }}
+                    className="text-muted hover:text-secondary transition-colors shrink-0 p-1"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {m.webhookUrl && (
+                  <p className="text-2xs text-muted truncate">{m.webhookUrl}</p>
+                )}
+                {m.webhookSecret ? (
+                  <div>
+                    <p className="text-2xs text-muted uppercase tracking-wider mb-1.5 font-semibold">Webhook secret</p>
                     <SecretCell value={m.webhookSecret} />
-                  ) : (
-                    <span className="text-xs text-muted">—</span>
-                  )}
-                </div>
-                <p className="text-xs text-muted">{formatDate(m.createdAt)}</p>
+                  </div>
+                ) : null}
               </div>
             ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <div className="grid grid-cols-[1fr_1fr_120px] gap-4 px-5 py-2.5 border-b border-border">
+              {["Merchant", "Webhook secret", "Created"].map((h) => (
+                <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
+              ))}
+            </div>
+            <div className="divide-y divide-border">
+              {merchants.map((m) => (
+                <div key={m.id} className="grid grid-cols-[1fr_1fr_120px] gap-4 items-center px-5 py-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-primary">{m.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="text-2xs text-muted font-mono bg-surface px-1.5 py-0.5 rounded truncate max-w-[180px]">
+                        {m.id}
+                      </code>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(m.id); toast.success("ID copied"); }}
+                        className="text-muted hover:text-secondary transition-colors"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
+                    {m.webhookUrl && (
+                      <p className="text-2xs text-muted mt-1 truncate">{m.webhookUrl}</p>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    {m.webhookSecret ? (
+                      <SecretCell value={m.webhookSecret} />
+                    ) : (
+                      <span className="text-xs text-muted">—</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted">{formatDate(m.createdAt)}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
