@@ -166,7 +166,7 @@ export default function WalletPay({
                       onError: (e) => { setErrorMsg(e.message); setMode("error"); },
                     });
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-card hover:bg-surface border border-border transition-all text-sm text-primary font-medium"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card hover:bg-surface border border-border transition-all text-sm text-primary font-medium min-h-[44px]"
                 >
                   {WALLET_ICONS[connector.id]
                     ? <img src={WALLET_ICONS[connector.id]} className="w-6 h-6 rounded" alt={connector.name} />
@@ -211,15 +211,15 @@ export default function WalletPay({
                 <a
                   key={wallet.name}
                   href={wallet.deepLink(eip681)}
-                  className="flex flex-col items-center gap-1.5 py-3 rounded-xl bg-card hover:bg-surface border border-border transition-all"
+                  className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl bg-card hover:bg-surface border border-border transition-all min-h-[72px]"
                 >
                   <img
                     src={wallet.icon}
-                    className="w-8 h-8 rounded-xl object-contain"
+                    className="w-9 h-9 rounded-xl object-contain"
                     alt={wallet.name}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
-                  <span className="text-[11px] text-secondary">{wallet.name}</span>
+                  <span className="text-[11px] text-secondary text-center leading-tight px-1">{wallet.name}</span>
                 </a>
               ))}
             </div>
