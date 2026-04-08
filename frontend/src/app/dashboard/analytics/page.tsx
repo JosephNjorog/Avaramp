@@ -50,7 +50,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-5 md:p-7 space-y-5">
+      <div className="p-4 md:p-7 space-y-5 overflow-x-hidden">
         <div>
           <div className="h-6 w-24 skeleton mb-1" />
           <div className="h-4 w-48 skeleton" />
@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div className="p-4 md:p-7 space-y-5 overflow-x-hidden">
       <div>
         <h1 className="text-lg font-semibold text-primary">Analytics</h1>
         <p className="text-sm text-muted mt-0.5">Performance and settlement metrics</p>
@@ -82,11 +82,11 @@ export default function AnalyticsPage() {
         <p className="text-sm font-medium text-primary mb-0.5">7-day settlement volume</p>
         <p className="text-xs text-muted mb-4">USDC settled per day</p>
         {chartData.length === 0 ? (
-          <div className="h-[180px] flex items-center justify-center text-sm text-muted">
+          <div className="h-[200px] flex items-center justify-center text-sm text-muted text-center px-4">
             No settled payments yet — data will appear here once payments are completed.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={200} minHeight={200}>
             <AreaChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Currency split */}
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-sm font-medium text-primary mb-0.5">Currency distribution</p>
