@@ -36,17 +36,29 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
-      <body className="bg-background text-white font-sans antialiased overflow-x-hidden">
+      <head>
+        {/* Prevent flash of wrong theme — runs before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = JSON.parse(localStorage.getItem('avaramp-theme') || '{}');
+                if (t.state && t.state.theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="bg-bg text-primary font-sans antialiased overflow-x-hidden transition-colors duration-200">
         <Providers>
           {children}
           <Toaster
             position="top-right"
             toastOptions={{
-              style: {
-                background: "#111118",
-                color: "#fff",
-                border: "1px solid #1c1c28",
-              },
+              className: "!bg-card !text-primary !border !border-border !shadow-menu",
+              style: {},
             }}
           />
         </Providers>
