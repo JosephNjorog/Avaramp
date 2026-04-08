@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </AnimatePresence>
 
-      <main className="flex-1 min-w-0 overflow-auto pt-12 md:pt-0">
+      <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto pt-12 md:pt-0">
         {children}
       </main>
     </div>
