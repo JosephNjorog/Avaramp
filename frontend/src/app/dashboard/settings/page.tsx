@@ -29,12 +29,12 @@ type PasswordForm = z.infer<typeof passwordSchema>;
 // ── Composable field label + input ────────────────────────────────────────────
 function Field({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) {
   return (
-    <div className="grid sm:grid-cols-[200px_1fr] gap-3 items-start py-4 border-b border-border last:border-0">
-      <div>
+    <div className="flex flex-col sm:grid sm:grid-cols-[200px_1fr] gap-2 sm:gap-3 items-start py-4 border-b border-border last:border-0">
+      <div className="shrink-0">
         <p className="text-sm font-medium text-primary">{label}</p>
         {sub && <p className="text-xs text-muted mt-0.5">{sub}</p>}
       </div>
-      <div>{children}</div>
+      <div className="w-full">{children}</div>
     </div>
   );
 }
@@ -104,7 +104,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-5 md:p-7 space-y-5 max-w-2xl">
+    <div className="p-4 md:p-7 space-y-5 max-w-2xl overflow-x-hidden">
       <div>
         <h1 className="text-lg font-semibold text-primary">Settings</h1>
         <p className="text-sm text-muted mt-0.5">Manage your account and API credentials</p>
