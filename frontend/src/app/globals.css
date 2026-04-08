@@ -2,6 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme tokens ────────────────────────────────────────────────────────────
+   Light theme is the default. Dark theme applies when <html class="dark">.
+   Every Tailwind color token (bg, card, surface, etc.) maps to these vars.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Light theme ── */
+  --color-bg:            #f8f8fb;
+  --color-surface:       #f0f0f4;
+  --color-card:          #ffffff;
+  --color-border:        #e2e2e8;
+  --color-primary:       #0f0f14;
+  --color-secondary:     #52525e;
+  --color-muted:         #9898a8;
+
+  /* Indigo — same accent both themes */
+  --color-indigo:        #7c6ff7;
+  --color-indigo-dim:    rgba(124,111,247,0.10);
+  --color-indigo-border: rgba(124,111,247,0.30);
+
+  /* Status colors */
+  --color-green:         #16a34a;
+  --color-green-dim:     rgba(22,163,74,0.10);
+  --color-amber:         #d97706;
+  --color-amber-dim:     rgba(217,119,6,0.10);
+  --color-red:           #dc2626;
+  --color-red-dim:       rgba(220,38,38,0.10);
+  --color-blue:          #2563eb;
+  --color-blue-dim:      rgba(37,99,235,0.10);
+
+  /* Shadows */
+  --shadow-menu:         rgba(0,0,0,0.08);
+}
+
+.dark {
+  /* ── Dark theme ── */
+  --color-bg:            #0c0c0e;
+  --color-surface:       #141416;
+  --color-card:          #1a1a1d;
+  --color-border:        #26262a;
+  --color-primary:       #f2f2f4;
+  --color-secondary:     #9898a0;
+  --color-muted:         #5c5c66;
+
+  --color-indigo:        #7c6ff7;
+  --color-indigo-dim:    rgba(124,111,247,0.08);
+  --color-indigo-border: rgba(124,111,247,0.25);
+
+  --color-green:         #3dd68c;
+  --color-green-dim:     rgba(61,214,140,0.12);
+  --color-amber:         #f5a623;
+  --color-amber-dim:     rgba(245,166,35,0.12);
+  --color-red:           #f56060;
+  --color-red-dim:       rgba(245,96,96,0.12);
+  --color-blue:          #60a5fa;
+  --color-blue-dim:      rgba(96,165,250,0.12);
+
+  --shadow-menu:         rgba(0,0,0,0.6);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
@@ -13,25 +75,33 @@
   }
 
   body {
-    background-color: #0c0c0e;
-    color: #f2f2f4;
+    background-color: var(--color-bg);
+    color: var(--color-primary);
     font-family: var(--font-inter), system-ui, sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   ::selection {
-    background-color: rgba(124, 111, 247, 0.25);
-    color: #f2f2f4;
+    background-color: rgba(124, 111, 247, 0.20);
+    color: var(--color-primary);
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #26262a; border-radius: 6px; }
-  ::-webkit-scrollbar-thumb:hover { background: #36363c; }
+  ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
 }
+
+/* ── Components ──────────────────────────────────────────────────────────── */
 
 @layer components {
   .skeleton {
-    background: linear-gradient(90deg, #1a1a1d 25%, #22222a 50%, #1a1a1d 75%);
+    background: linear-gradient(
+      90deg,
+      var(--color-card)    25%,
+      var(--color-surface) 50%,
+      var(--color-card)    75%
+    );
     background-size: 600px 100%;
     @apply animate-shimmer rounded-lg;
   }
@@ -43,10 +113,17 @@
            transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* Light mode: give inputs a clean white background */
+  :root .input {
+    background-color: var(--color-card);
+  }
+
   .mask-fade {
     mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
   }
 }
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
