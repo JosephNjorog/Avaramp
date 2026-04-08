@@ -7,6 +7,7 @@ import {
   BarChart2, Webhook, Settings, LogOut, Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -76,13 +77,16 @@ export default function Sidebar() {
             <p className="text-2xs text-muted">{user?.kycStatus ?? "PENDING"}</p>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-secondary hover:text-red-DEFAULT hover:bg-red-dim transition-colors"
-        >
-          <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-          Sign out
-        </button>
+        <div className="flex items-center justify-between mb-1">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 flex-1 px-3 py-2 rounded-lg text-sm text-secondary hover:text-red-DEFAULT hover:bg-red-dim transition-colors"
+          >
+            <LogOut className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+            Sign out
+          </button>
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );
