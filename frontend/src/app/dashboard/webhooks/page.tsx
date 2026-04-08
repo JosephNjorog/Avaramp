@@ -33,39 +33,39 @@ function DeliveryRow({ d }: { d: Delivery }) {
     <div className="border-b border-border last:border-0">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-surface/50 transition-colors text-left"
+        className="w-full flex items-start gap-3 px-4 sm:px-5 py-3.5 hover:bg-surface/50 transition-colors text-left min-h-[44px]"
       >
-        <div className={cn("w-6 h-6 rounded-md flex items-center justify-center shrink-0", s.bg)}>
+        <div className={cn("w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5", s.bg)}>
           <Icon className={cn("w-3.5 h-3.5", s.text)} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-primary">{d.event}</span>
-            <span className={cn("text-2xs px-1.5 py-0.5 rounded font-medium", s.bg, s.text)}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-xs font-medium text-primary break-all">{d.event}</span>
+            <span className={cn("text-2xs px-1.5 py-0.5 rounded font-medium shrink-0", s.bg, s.text)}>
               {s.label}
             </span>
           </div>
-          <p className="text-2xs text-muted mt-0.5">{formatDate(d.sentAt)}</p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+            <p className="text-2xs text-muted">{formatDate(d.sentAt)}</p>
+            {d.payment && (
+              <p className="text-2xs text-muted font-mono">{d.payment.id.slice(0, 8)}…</p>
+            )}
+          </div>
         </div>
-        <div className="text-right shrink-0 mr-2">
-          {d.payment && (
-            <p className="text-2xs text-muted font-mono">{d.payment.id.slice(0, 8)}…</p>
-          )}
-        </div>
-        <div className="text-muted shrink-0">
+        <div className="text-muted shrink-0 mt-0.5">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </button>
       {open && (
-        <div className="px-5 pb-4 space-y-2">
+        <div className="px-4 sm:px-5 pb-4 space-y-2">
           {d.error && (
-            <div className="bg-red-dim border border-red-DEFAULT/20 rounded-lg px-3 py-2 text-xs text-red-DEFAULT">
+            <div className="bg-red-dim border border-red-DEFAULT/20 rounded-lg px-3 py-2 text-xs text-red-DEFAULT break-words">
               Error: {d.error}
             </div>
           )}
           <div className="bg-surface border border-border rounded-lg p-3">
             <p className="text-2xs text-muted uppercase tracking-wider mb-2 font-semibold">Delivery details</p>
-            <pre className="text-xs font-mono text-indigo-DEFAULT leading-relaxed overflow-x-auto">
+            <pre className="text-xs font-mono text-indigo-DEFAULT leading-relaxed overflow-x-auto max-w-full">
               {JSON.stringify({ id: d.id, event: d.event, status: d.status, sentAt: d.sentAt, paymentId: d.payment?.id }, null, 2)}
             </pre>
           </div>
@@ -88,7 +88,7 @@ export default function WebhooksPage() {
   const failed    = deliveries.filter((d) => d.status === "failed").length;
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div className="p-4 md:p-7 space-y-5 overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-primary">Webhooks</h1>
