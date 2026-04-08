@@ -46,7 +46,7 @@ export default function PaymentsPage() {
   });
 
   return (
-    <div className="p-5 md:p-7 space-y-5">
+    <div className="p-4 md:p-7 space-y-5 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -74,15 +74,15 @@ export default function PaymentsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by ID, reference, or address"
-            className="input pl-9 h-8 text-xs"
+            className="input pl-9 h-9 text-xs"
           />
         </div>
-        <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-1 h-8 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-1 overflow-x-auto scrollbar-none min-h-[2.25rem]">
           {STATUSES.map((s) => (
             <button
               key={s}
               onClick={() => setStatus(s)}
-              className={`px-2.5 py-0.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 status === s
                   ? "bg-indigo-dim text-indigo-DEFAULT"
                   : "text-muted hover:text-secondary"
@@ -94,19 +94,12 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table / Card list */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {/* Column headers */}
-        <div className="grid grid-cols-[1fr_100px_140px_80px] gap-4 px-5 py-2.5 border-b border-border">
-          {["Payment", "Amount", "Address", "Status"].map((h) => (
-            <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
-          ))}
-        </div>
-
         {isLoading ? (
           <SkeletonTable rows={8} cols={4} />
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center px-4">
             <ArrowLeftRight className="w-8 h-8 text-border mb-3" strokeWidth={1} />
             <p className="text-sm text-secondary mb-1">
               {search || status !== "ALL" ? "No payments match your filters" : "No payments yet"}
@@ -118,55 +111,95 @@ export default function PaymentsPage() {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {filtered.map((p: any) => (
-              <div key={p.id} className="grid grid-cols-[1fr_100px_140px_80px] gap-4 items-center px-5 py-3.5 hover:bg-surface/60 transition-colors">
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-primary truncate">
-                    {p.reference || <span className="text-muted">No reference</span>}
-                  </p>
-                  <p className="text-2xs text-muted font-mono mt-0.5">{p.id?.slice(0, 16)}…</p>
-                  <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
-                  <p className="text-2xs text-muted">{p.fiatAmount} {p.currency}</p>
-                </div>
-                <div>
-                  {p.depositAddress ? (
-                    <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded">
+          <>
+            {/* Mobile card list */}
+            <div className="sm:hidden divide-y divide-border">
+              {filtered.map((p: any) => (
+                <div key={p.id} className="px-4 py-3.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-primary truncate">
+                      {p.reference || <span className="text-muted text-xs">No reference</span>}
+                    </p>
+                    <Badge status={p.status} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
+                    <p className="text-xs text-muted">{p.fiatAmount} {p.currency}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-2xs text-muted font-mono truncate">{p.id?.slice(0, 20)}…</p>
+                    <p className="text-2xs text-muted shrink-0">{formatDate(p.createdAt)}</p>
+                  </div>
+                  {p.depositAddress && (
+                    <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded block truncate">
                       {truncateAddress(p.depositAddress)}
                     </code>
-                  ) : <span className="text-2xs text-muted">—</span>}
+                  )}
                 </div>
-                <Badge status={p.status} />
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_100px_140px_80px] gap-4 px-5 py-2.5 border-b border-border">
+                {["Payment", "Amount", "Address", "Status"].map((h) => (
+                  <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
+                ))}
               </div>
-            ))}
-          </div>
+              <div className="divide-y divide-border">
+                {filtered.map((p: any) => (
+                  <div key={p.id} className="grid grid-cols-[1fr_100px_140px_80px] gap-4 items-center px-5 py-3.5 hover:bg-surface/60 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-primary truncate">
+                        {p.reference || <span className="text-muted">No reference</span>}
+                      </p>
+                      <p className="text-2xs text-muted font-mono mt-0.5">{p.id?.slice(0, 16)}…</p>
+                      <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
+                      <p className="text-2xs text-muted">{p.fiatAmount} {p.currency}</p>
+                    </div>
+                    <div>
+                      {p.depositAddress ? (
+                        <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded">
+                          {truncateAddress(p.depositAddress)}
+                        </code>
+                      ) : <span className="text-2xs text-muted">—</span>}
+                    </div>
+                    <Badge status={p.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && !search && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:justify-between">
           <p className="text-xs text-muted">
             Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
-              size="xs"
+              size="sm"
               variant="secondary"
               disabled={page === 0}
               onClick={() => setPage((p) => p - 1)}
+              className="flex-1 sm:flex-none py-3 sm:py-1.5"
             >
               ← Prev
             </Button>
-            <span className="text-xs text-muted px-1">{page + 1} / {totalPages}</span>
+            <span className="text-xs text-muted px-2 shrink-0">{page + 1} / {totalPages}</span>
             <Button
-              size="xs"
+              size="sm"
               variant="secondary"
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => p + 1)}
+              className="flex-1 sm:flex-none py-3 sm:py-1.5"
             >
               Next →
             </Button>
