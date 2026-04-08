@@ -40,7 +40,7 @@ export default function OverviewPage() {
   const pending  = payments.filter((p) => p.status === "PENDING").length;
 
   return (
-    <div className="p-5 md:p-7 space-y-6">
+    <div className="p-4 md:p-7 space-y-6 overflow-x-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -65,7 +65,7 @@ export default function OverviewPage() {
       </div>
 
       {/* Chart + table */}
-      <div className="grid lg:grid-cols-[1fr_400px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-5">
         {/* Volume chart */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="mb-4">
