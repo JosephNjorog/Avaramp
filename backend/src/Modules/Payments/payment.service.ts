@@ -36,6 +36,8 @@ export class PaymentService {
       amountUsdc:     dto.amountUsdc,
       amountFiat:     fiatAmount,
       fiatCurrency:   dto.fiatCurrency,
+      phone:          dto.phone,
+      reference:      dto.reference,
       depositAddress,
       depositPk,
       fxRate:         rate,
@@ -56,11 +58,15 @@ export class PaymentService {
     );
 
     return {
+      id:             payment.id,
       paymentId:      payment.id,
       depositAddress: payment.depositAddress,
       amountUsdc:     payment.amountUsdc,
       fiatAmount:     payment.amountFiat,
+      fiatCurrency:   payment.fiatCurrency,
       currency:       payment.fiatCurrency,
+      phone:          payment.phone,
+      reference:      payment.reference,
       expiresAt:      payment.expiresAt,
       network:        "avalanche",
       token:          "USDC",
