@@ -82,7 +82,7 @@ export default function HowItWorks() {
               initial={{ opacity: 0, y: 16 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="grid md:grid-cols-[240px_1fr] gap-5 bg-card border border-border rounded-xl p-5 hover:border-[#36363c] transition-colors"
+              className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5 bg-card border border-border rounded-xl p-4 sm:p-5 hover:border-[#36363c] transition-colors"
             >
               {/* Left */}
               <div>
