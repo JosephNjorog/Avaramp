@@ -104,17 +104,15 @@ export default function RegisterPage() {
   // ── Step 1: create account ─────────────────────────────────────────────────
   const onStep1 = async (data: Step1Form) => {
     try {
-      const res             = await authApi.register({ email: data.email, password: data.password, phone: data.phone });
+      // Registration auto-creates the merchant profile on the backend
+      const res             = await authApi.register({
+        email:        data.email,
+        password:     data.password,
+        phone:        data.phone,
+        businessName: data.businessName,
+      });
       const { user, token } = res.data.data ?? res.data;
       setAuth(user, token);
-
-      // Auto-create merchant profile with business name
-      try {
-        await merchantsApi.create({ name: data.businessName, phone: data.phone });
-      } catch {
-        // Non-fatal — merchant can be created from dashboard
-      }
-
       setStep(2);
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
