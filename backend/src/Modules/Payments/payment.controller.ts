@@ -1,12 +1,22 @@
 import { Request, Response, NextFunction } from "express";
 import { PaymentService } from "./payment.service";
+import { prisma } from "../../shared/database/prisma";
 
 const service = new PaymentService();
 
 export class PaymentController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await service.createPayment(req.body);
+      const userId = (req as any).user?.sub as string | undefined;
+
+      // Auto-inject merchantId from the authenticated user's merchant profile
+      let { merchantId } = req.body;
+      if (!merchantId && userId) {
+        const merchant = await prisma.merchant.findUnique({ where: { userId } });
+        if (merchant) merchantId = merchant.id;
+      }
+
+      const result = await service.createPayment({ ...req.body, merchantId, userId });
       res.status(201).json({ success: true, data: result });
     } catch (err) { next(err); }
   }
