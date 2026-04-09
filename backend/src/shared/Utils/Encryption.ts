@@ -10,8 +10,10 @@ function toBytes(buf: Buffer): Uint8Array {
 }
 
 function getKey(): crypto.KeyObject {
-  const hex = process.env.ENCRYPTION_KEY || "0".repeat(64);
-  return crypto.createSecretKey(toBytes(Buffer.from(hex, "hex")));
+  const raw = process.env.ENCRYPTION_KEY || "0".repeat(64);
+  // SHA-256 the raw value so any string length always produces a valid 32-byte key
+  const keyBytes = crypto.createHash("sha256").update(raw).digest();
+  return crypto.createSecretKey(toBytes(keyBytes));
 }
 
 export function encrypt(text: string): string {
