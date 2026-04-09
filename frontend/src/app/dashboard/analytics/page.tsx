@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { DollarSign, Zap, TrendingUp, Globe } from "lucide-react";
@@ -10,22 +10,13 @@ import StatsCard from "@/components/dashboard/StatsCard";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { paymentsApi } from "@/lib/api";
 
-// Static distributions — will vary as real data accumulates
-const DIST = [
-  { name: "KES", value: 52, color: "#7c6ff7" },
-  { name: "NGN", value: 28, color: "#60a5fa" },
-  { name: "GHS", value: 10, color: "#3dd68c" },
-  { name: "TZS", value:  6, color: "#f5a623" },
-  { name: "UGX", value:  4, color: "#f56060" },
-];
-
-const SETTLE_TIMES = [
-  { label: "< 1 min",  n: 14 },
-  { label: "1–2 min",  n: 38 },
-  { label: "2–5 min",  n: 22 },
-  { label: "5–15 min", n:  8 },
-  { label: "> 15 min", n:  2 },
-];
+const CURRENCY_COLORS: Record<string, string> = {
+  KES: "#7c6ff7",
+  NGN: "#60a5fa",
+  GHS: "#3dd68c",
+  TZS: "#f5a623",
+  UGX: "#f56060",
+};
 
 const TT = {
   contentStyle: { background: "#1a1a1d", border: "1px solid #26262a", borderRadius: 10, fontSize: 12 },
@@ -41,6 +32,18 @@ export default function AnalyticsPage() {
 
   const summary = data?.data?.data;
   const dailyVolume: { date: string; volume: number }[] = summary?.dailyVolume ?? [];
+
+  // Build currency distribution from real payment data (keyed by fiatCurrency)
+  const currencyMap: Record<string, number> = {};
+  (summary?.currencyBreakdown ?? []).forEach((c: { currency: string; count: number }) => {
+    currencyMap[c.currency] = c.count;
+  });
+  const totalCurrencyCount = Object.values(currencyMap).reduce((s, n) => s + n, 0);
+  const distData = Object.entries(currencyMap).map(([name, count]) => ({
+    name,
+    value: totalCurrencyCount > 0 ? Math.round((count / totalCurrencyCount) * 100) : 0,
+    color: CURRENCY_COLORS[name] ?? "#9898a0",
+  }));
 
   // Format dates for chart display
   const chartData = dailyVolume.map((d) => ({
@@ -109,42 +112,42 @@ export default function AnalyticsPage() {
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-sm font-medium text-primary mb-0.5">Currency distribution</p>
           <p className="text-xs text-muted mb-4">Settlement currency breakdown</p>
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width={140} height={140}>
-              <PieChart>
-                <Pie data={DIST} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
-                  {DIST.map((e) => <Cell key={e.name} fill={e.color} opacity={0.9} />)}
-                </Pie>
-                <Tooltip {...TT} formatter={(v: any) => `${v}%`} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-2">
-              {DIST.map((d) => (
-                <div key={d.name} className="flex items-center justify-between gap-6 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
-                    <span className="text-primary font-medium">{d.name}</span>
-                  </div>
-                  <span className="text-muted">{d.value}%</span>
-                </div>
-              ))}
+          {distData.length === 0 ? (
+            <div className="h-[140px] flex items-center justify-center text-sm text-muted text-center px-4">
+              No settled payments yet — distribution will appear here once payments complete.
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-6">
+              <ResponsiveContainer width={140} height={140}>
+                <PieChart>
+                  <Pie data={distData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
+                    {distData.map((e) => <Cell key={e.name} fill={e.color} opacity={0.9} />)}
+                  </Pie>
+                  <Tooltip {...TT} formatter={(v: any) => `${v}%`} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2">
+                {distData.map((d) => (
+                  <div key={d.name} className="flex items-center justify-between gap-6 text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+                      <span className="text-primary font-medium">{d.name}</span>
+                    </div>
+                    <span className="text-muted">{d.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Settlement time */}
         <div className="bg-card border border-border rounded-xl p-4">
           <p className="text-sm font-medium text-primary mb-0.5">Settlement time</p>
-          <p className="text-xs text-muted mb-4">USDC confirmed → M-Pesa received</p>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={SETTLE_TIMES} layout="vertical" margin={{ left: 10, right: 16, top: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#26262a" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="label" type="category" tick={{ fill: "#9898a0", fontSize: 11 }} axisLine={false} tickLine={false} width={55} />
-              <Tooltip {...TT} />
-              <Bar dataKey="n" name="Payments" fill="#7c6ff7" radius={[0, 4, 4, 0]} opacity={0.85} />
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="text-xs text-muted mb-4">USDC confirmed → fiat received</p>
+          <div className="h-[160px] flex items-center justify-center text-sm text-muted text-center px-4">
+            Settlement time metrics will appear here once payments have been processed.
+          </div>
         </div>
       </div>
     </div>
