@@ -8,6 +8,7 @@ import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
 import mpesaRoutes      from "./Modules/Settlements/mpesa.routes";
+import consentRoutes    from "./Modules/Consent/consent.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
 import { logger }       from "./shared/Utils/Logger";
 
@@ -33,6 +34,9 @@ app.use("/payments",    paymentRoutes);
 app.use("/settlements", settlementRoutes);
 // M-Pesa Daraja callback endpoints (no auth — Safaricom calls these)
 app.use("/mpesa",       mpesaRoutes);
+// Consent recording & admin audit
+app.use("/consent",     consentRoutes);
+app.use("/api",         consentRoutes);
 
 // ── Global error handler ────────────────────────────────────────────────────
 app.use((err: any, req: any, res: any, _next: any) => {
