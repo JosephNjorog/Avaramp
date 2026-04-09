@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../shared/database/prisma";
-import { ConflictError, NotFoundError, UnauthorizedError } from "../../shared/Utils/Errors";
+import { ConflictError, UnauthorizedError } from "../../shared/Utils/Errors";
 
 const ITERATIONS  = 100_000;
 const KEY_LEN     = 64;
@@ -13,9 +13,11 @@ function hashPassword(password: string, salt: string): string {
 }
 
 export interface RegisterDto {
-  email:    string;
-  password: string;
-  phone?:   string;
+  email:        string;
+  password:     string;
+  phone?:       string;
+  name?:        string;  // merchant/business display name
+  businessName?: string; // alias accepted from frontend
 }
 
 export interface LoginDto {
@@ -30,18 +32,31 @@ export class AuthService {
 
     const salt         = crypto.randomBytes(16).toString("hex");
     const passwordHash = hashPassword(dto.password, salt);
+    const webhookSecret = crypto.randomBytes(32).toString("hex");
+    const merchantName  = dto.businessName ?? dto.name ?? dto.email.split("@")[0];
 
+    // Create user + merchant in one transaction
     const user = await prisma.user.create({
       data: {
         email:        dto.email,
         phone:        dto.phone,
         passwordHash: `${salt}:${passwordHash}`,
+        merchant: {
+          create: {
+            name:          merchantName,
+            email:         dto.email,
+            walletAddress: `0x${crypto.randomBytes(20).toString("hex")}`,
+            mpesaTill:     dto.phone ?? "",
+            webhookSecret,
+          },
+        },
       },
+      include: { merchant: true },
     });
 
     const token = this.issueToken(user.id, user.email);
-    const { passwordHash: _h, ...safeUser } = user as any;
-    return { user: safeUser, token };
+    const { passwordHash: _h, merchant, ...safeUser } = user as any;
+    return { user: safeUser, merchant, token };
   }
 
   async login(dto: LoginDto) {
