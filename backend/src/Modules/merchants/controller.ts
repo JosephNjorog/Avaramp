@@ -4,8 +4,16 @@ const service = new MerchantService();
 export class MerchantController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await service.createMerchant(req.body);
+      const userId = (req as any).user?.sub as string | undefined;
+      const result = await service.createMerchant({ ...req.body, userId });
       res.status(201).json({ success: true, data: result });
+    } catch (err) { next(err); }
+  }
+  async getMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.sub as string;
+      const result = await service.getMerchantByUserId(userId);
+      res.status(200).json({ success: true, data: result });
     } catch (err) { next(err); }
   }
   async getById(req: Request, res: Response, next: NextFunction) {

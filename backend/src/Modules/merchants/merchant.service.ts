@@ -24,4 +24,10 @@ export class MerchantService {
     if (!merchant) throw new NotFoundError("Merchant");
     return merchant;
   }
+
+  async getMerchantByUserId(userId: string) {
+    const merchant = await repo.findByUserId(userId);
+    if (!merchant) throw new NotFoundError("Merchant");
+    return merchant;
+  }
 }
