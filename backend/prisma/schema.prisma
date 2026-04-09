@@ -17,10 +17,13 @@ model User {
   updatedAt    DateTime        @updatedAt
   payments     Payment[]
   consents     ConsentRecord[]
+  merchant     Merchant?
 }
 
 model Merchant {
   id             String    @id @default(uuid())
+  userId         String?   @unique
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   name           String
   email          String    @unique
   walletAddress  String    @unique
