@@ -35,7 +35,8 @@ export default function OverviewPage() {
     staleTime: 30_000,
   });
 
-  const payments: any[] = data?.data?.data ?? data?.data ?? [];
+  const _raw     = data?.data?.data ?? data?.data;
+  const payments: any[] = Array.isArray(_raw) ? _raw : (_raw?.payments ?? []);
   const settled  = payments.filter((p) => p.status === "SETTLED").length;
   const pending  = payments.filter((p) => p.status === "PENDING").length;
 
