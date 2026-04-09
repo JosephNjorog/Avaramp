@@ -11,11 +11,10 @@ import Button from "@/components/ui/Button";
 import { paymentsApi } from "@/lib/api";
 
 const schema = z.object({
-  merchantId: z.string().min(1, "Required"),
-  amount:     z.string().min(1, "Required"),
-  currency:   z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
-  phone:      z.string().optional(),
-  reference:  z.string().optional(),
+  amount:    z.string().min(1, "Required"),
+  currency:  z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
+  phone:     z.string().optional(),
+  reference: z.string().optional(),
 });
 
 type Form = z.infer<typeof schema>;
@@ -134,12 +133,6 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-primary">Merchant ID</label>
-            <input {...register("merchantId")} placeholder="mer_01234" className="input" />
-            {errors.merchantId && <p className="text-xs text-red-DEFAULT">{errors.merchantId.message}</p>}
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-primary">Amount</label>
