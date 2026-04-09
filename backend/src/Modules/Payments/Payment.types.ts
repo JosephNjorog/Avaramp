@@ -10,11 +10,15 @@ export interface CreatePaymentDto {
 }
 
 export interface PaymentResponse {
+  id:             string;
   paymentId:      string;
   depositAddress: string;
   amountUsdc:     string;
   fiatAmount?:    string;
+  fiatCurrency?:  string;
   currency?:      string;
+  phone?:         string;
+  reference?:     string;
   expiresAt:      Date;
   network:        string;
   token:          string;
