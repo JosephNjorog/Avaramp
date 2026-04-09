@@ -88,7 +88,7 @@ export default function CompliancePage() {
         {(["TERMS", "PRIVACY", "COOKIES"] as const).map((type) => {
           const config = POLICY_LABELS[type];
           const Icon   = config.icon;
-          const count  = data?.records.filter((r) => r.policyType === type).length ?? 0;
+          const count  = (data?.records ?? []).filter((r) => r.policyType === type).length;
           return (
             <div key={type} className={`p-4 rounded-xl border ${config.color} bg-opacity-10`}>
               <div className="flex items-center gap-2 mb-1">
