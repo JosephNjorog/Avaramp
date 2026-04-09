@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Zap, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Zap, CheckCircle2, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import { authApi, merchantsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -15,11 +15,14 @@ import Button from "@/components/ui/Button";
 // ── Two-step schema ───────────────────────────────────────────────────────────
 
 const step1Schema = z.object({
-  businessName: z.string().min(2, "Enter your business name"),
-  email:        z.string().email("Enter a valid email"),
-  phone:        z.string().min(8, "Enter your phone number"),
-  password:     z.string().min(8, "Minimum 8 characters"),
-  confirm:      z.string(),
+  businessName:  z.string().min(2, "Enter your business name"),
+  email:         z.string().email("Enter a valid email"),
+  phone:         z.string().min(8, "Enter your phone number"),
+  password:      z.string().min(8, "Minimum 8 characters"),
+  confirm:       z.string(),
+  acceptTerms:   z.literal(true, { errorMap: () => ({ message: "You must accept the Terms of Service" }) }),
+  acceptPrivacy: z.literal(true, { errorMap: () => ({ message: "You must accept the Privacy Policy" }) }),
+  acceptCookies: z.literal(true, { errorMap: () => ({ message: "You must accept the Cookie Policy" }) }),
 }).refine((d) => d.password === d.confirm, {
   path: ["confirm"], message: "Passwords don't match",
 });
@@ -42,18 +45,21 @@ export default function RegisterPage() {
   const { setAuth } = useAuthStore();
   const [showPass, setShowPass] = useState(false);
   const [step, setStep]         = useState<1 | 2>(1);
-  const [userData, setUserData] = useState<{ token: string; userId: string } | null>(null);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, getValues } = useForm<Step1Form>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Step1Form>({
     resolver: zodResolver(step1Schema),
+    defaultValues: {
+      acceptTerms:   undefined as unknown as true,
+      acceptPrivacy: undefined as unknown as true,
+      acceptCookies: undefined as unknown as true,
+    },
   });
 
   // ── Step 1: create account ─────────────────────────────────────────────────
   const onStep1 = async (data: Step1Form) => {
     try {
-      const res          = await authApi.register({ email: data.email, password: data.password, phone: data.phone });
+      const res             = await authApi.register({ email: data.email, password: data.password, phone: data.phone });
       const { user, token } = res.data.data ?? res.data;
-      setUserData({ token, userId: user.id });
       setAuth(user, token);
 
       // Auto-create merchant profile with business name
@@ -172,17 +178,84 @@ export default function RegisterPage() {
                   {errors.confirm && <p className="text-xs text-red-400">{errors.confirm.message}</p>}
                 </div>
 
+                {/* ── Legal acceptance ──────────────────────────────────────── */}
+                <div className="space-y-3 pt-2 border-t border-border">
+                  <p className="text-xs font-semibold text-muted uppercase tracking-wider pt-1">
+                    Legal Agreements (Required)
+                  </p>
+
+                  {/* Terms of Service */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="mt-0.5 shrink-0">
+                      <input
+                        {...register("acceptTerms")}
+                        type="checkbox"
+                        className="sr-only peer"
+                      />
+                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-secondary leading-relaxed">
+                      I have read, understood, and agree to the{" "}
+                      <Link href="/terms" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
+                        Terms of Service <ExternalLink className="w-3 h-3" />
+                      </Link>
+                      {" "}including the Limitation of Liability, Prohibited Activities, and KYC/AML requirements.
+                    </span>
+                  </label>
+                  {errors.acceptTerms && <p className="text-xs text-red-400 ml-7">{errors.acceptTerms.message}</p>}
+
+                  {/* Privacy Policy */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="mt-0.5 shrink-0">
+                      <input
+                        {...register("acceptPrivacy")}
+                        type="checkbox"
+                        className="sr-only peer"
+                      />
+                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-secondary leading-relaxed">
+                      I have read and accept the{" "}
+                      <Link href="/privacy" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
+                        Privacy Policy <ExternalLink className="w-3 h-3" />
+                      </Link>
+                      , including the collection and use of my personal and business data as described, and the Blockchain Transparency Notice.
+                    </span>
+                  </label>
+                  {errors.acceptPrivacy && <p className="text-xs text-red-400 ml-7">{errors.acceptPrivacy.message}</p>}
+
+                  {/* Cookie Policy */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="mt-0.5 shrink-0">
+                      <input
+                        {...register("acceptCookies")}
+                        type="checkbox"
+                        className="sr-only peer"
+                      />
+                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
+                      </div>
+                    </div>
+                    <span className="text-xs text-secondary leading-relaxed">
+                      I consent to AvaRamp's use of cookies and local storage as described in the{" "}
+                      <Link href="/cookies" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
+                        Cookie Policy <ExternalLink className="w-3 h-3" />
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                  {errors.acceptCookies && <p className="text-xs text-red-400 ml-7">{errors.acceptCookies.message}</p>}
+                </div>
+                {/* ── End legal acceptance ──────────────────────────────────── */}
+
                 <Button type="submit" className="w-full" loading={isSubmitting}>
                   Create my account
                 </Button>
               </form>
-
-              <p className="text-xs text-muted mt-4 text-center">
-                By signing up you agree to our{" "}
-                <Link href="/terms" className="text-secondary hover:text-primary">Terms</Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-secondary hover:text-primary">Privacy Policy</Link>.
-              </p>
 
               <p className="text-center text-sm text-secondary mt-5">
                 Already have an account?{" "}
@@ -259,7 +332,14 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <p className="text-xs text-muted text-center mt-8">
+        <div className="mt-8 p-4 bg-indigo-dim border border-indigo-border rounded-xl">
+          <p className="text-xs font-semibold text-primary mb-1">Protected by law</p>
+          <p className="text-xs text-secondary">
+            AvaRamp operates under the Kenya Data Protection Act, 2019 and POCAMLA compliance framework. Your data is encrypted and handled with care.
+          </p>
+        </div>
+
+        <p className="text-xs text-muted text-center mt-6">
           1.5% per successful settlement · No monthly fee
         </p>
       </div>
