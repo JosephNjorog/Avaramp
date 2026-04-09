@@ -42,19 +42,26 @@ function LegalCheckbox({
   return (
     <div>
       <label className="flex items-start gap-3 cursor-pointer">
-        {/* Invisible real input sized over the visual box so clicks register */}
+        {/* Real input overlaid so clicks register; styled div shows state */}
         <div className="relative mt-0.5 shrink-0 w-4 h-4">
           <input
             {...field}
             type="checkbox"
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
-          <div className={`w-4 h-4 rounded border transition-colors flex items-center justify-center pointer-events-none ${
-            checked
-              ? "bg-indigo-DEFAULT border-indigo-DEFAULT"
-              : "bg-surface border-border"
-          }`}>
-            {checked && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+          {/* Use inline style for the dynamic colour — Tailwind purge-safe */}
+          <div
+            className="w-4 h-4 rounded border-2 transition-all flex items-center justify-center pointer-events-none"
+            style={{
+              backgroundColor: checked ? "var(--color-indigo)"        : "transparent",
+              borderColor:     checked ? "var(--color-indigo)"        : "var(--color-muted)",
+            }}
+          >
+            {checked && (
+              <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="2,6 5,9 10,3" />
+              </svg>
+            )}
           </div>
         </div>
         <span className="text-xs text-secondary leading-relaxed">{label}</span>
