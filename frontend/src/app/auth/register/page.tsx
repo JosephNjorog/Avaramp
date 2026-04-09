@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Zap, CheckCircle2, ExternalLink } from "lucide-react";
+import { Eye, EyeOff, Zap, CheckCircle2, ExternalLink, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { authApi, merchantsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -29,6 +29,41 @@ const step1Schema = z.object({
 
 type Step1Form = z.infer<typeof step1Schema>;
 
+// ── Checkbox that actually works ─────────────────────────────────────────────
+
+function LegalCheckbox({
+  field, checked, error, label,
+}: {
+  field:   React.InputHTMLAttributes<HTMLInputElement>;
+  checked: boolean;
+  error?:  string;
+  label:   React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="flex items-start gap-3 cursor-pointer">
+        {/* Invisible real input sized over the visual box so clicks register */}
+        <div className="relative mt-0.5 shrink-0 w-4 h-4">
+          <input
+            {...field}
+            type="checkbox"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
+          <div className={`w-4 h-4 rounded border transition-colors flex items-center justify-center pointer-events-none ${
+            checked
+              ? "bg-indigo-DEFAULT border-indigo-DEFAULT"
+              : "bg-surface border-border"
+          }`}>
+            {checked && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+          </div>
+        </div>
+        <span className="text-xs text-secondary leading-relaxed">{label}</span>
+      </label>
+      {error && <p className="text-xs text-red-400 mt-1 ml-7">{error}</p>}
+    </div>
+  );
+}
+
 // ── What merchants get ────────────────────────────────────────────────────────
 
 const PERKS = [
@@ -46,7 +81,7 @@ export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [step, setStep]         = useState<1 | 2>(1);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Step1Form>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Step1Form>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
       acceptTerms:   undefined as unknown as true,
@@ -54,6 +89,10 @@ export default function RegisterPage() {
       acceptCookies: undefined as unknown as true,
     },
   });
+
+  const watchTerms   = watch("acceptTerms");
+  const watchPrivacy = watch("acceptPrivacy");
+  const watchCookies = watch("acceptCookies");
 
   // ── Step 1: create account ─────────────────────────────────────────────────
   const onStep1 = async (data: Step1Form) => {
@@ -185,70 +224,46 @@ export default function RegisterPage() {
                   </p>
 
                   {/* Terms of Service */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="mt-0.5 shrink-0">
-                      <input
-                        {...register("acceptTerms")}
-                        type="checkbox"
-                        className="sr-only peer"
-                      />
-                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
-                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
-                      </div>
-                    </div>
-                    <span className="text-xs text-secondary leading-relaxed">
+                  <LegalCheckbox
+                    field={register("acceptTerms")}
+                    checked={!!watchTerms}
+                    error={errors.acceptTerms?.message}
+                    label={<>
                       I have read, understood, and agree to the{" "}
                       <Link href="/terms" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
                         Terms of Service <ExternalLink className="w-3 h-3" />
                       </Link>
                       {" "}including the Limitation of Liability, Prohibited Activities, and KYC/AML requirements.
-                    </span>
-                  </label>
-                  {errors.acceptTerms && <p className="text-xs text-red-400 ml-7">{errors.acceptTerms.message}</p>}
+                    </>}
+                  />
 
                   {/* Privacy Policy */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="mt-0.5 shrink-0">
-                      <input
-                        {...register("acceptPrivacy")}
-                        type="checkbox"
-                        className="sr-only peer"
-                      />
-                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
-                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
-                      </div>
-                    </div>
-                    <span className="text-xs text-secondary leading-relaxed">
+                  <LegalCheckbox
+                    field={register("acceptPrivacy")}
+                    checked={!!watchPrivacy}
+                    error={errors.acceptPrivacy?.message}
+                    label={<>
                       I have read and accept the{" "}
                       <Link href="/privacy" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
                         Privacy Policy <ExternalLink className="w-3 h-3" />
                       </Link>
-                      , including the collection and use of my personal and business data as described, and the Blockchain Transparency Notice.
-                    </span>
-                  </label>
-                  {errors.acceptPrivacy && <p className="text-xs text-red-400 ml-7">{errors.acceptPrivacy.message}</p>}
+                      , including collection and use of my personal data and the Blockchain Transparency Notice.
+                    </>}
+                  />
 
                   {/* Cookie Policy */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="mt-0.5 shrink-0">
-                      <input
-                        {...register("acceptCookies")}
-                        type="checkbox"
-                        className="sr-only peer"
-                      />
-                      <div className="w-4 h-4 rounded border border-border bg-surface peer-checked:bg-indigo-DEFAULT peer-checked:border-indigo-DEFAULT transition-colors flex items-center justify-center">
-                        <CheckCircle2 className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" />
-                      </div>
-                    </div>
-                    <span className="text-xs text-secondary leading-relaxed">
+                  <LegalCheckbox
+                    field={register("acceptCookies")}
+                    checked={!!watchCookies}
+                    error={errors.acceptCookies?.message}
+                    label={<>
                       I consent to AvaRamp's use of cookies and local storage as described in the{" "}
                       <Link href="/cookies" target="_blank" className="text-indigo-DEFAULT hover:underline inline-flex items-center gap-0.5">
                         Cookie Policy <ExternalLink className="w-3 h-3" />
                       </Link>
                       .
-                    </span>
-                  </label>
-                  {errors.acceptCookies && <p className="text-xs text-red-400 ml-7">{errors.acceptCookies.message}</p>}
+                    </>}
+                  />
                 </div>
                 {/* ── End legal acceptance ──────────────────────────────────── */}
 
