@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a78bfa"/>
+      <stop offset="100%" style="stop-color:#7c6ff7"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="192" height="192" rx="40" fill="url(#bg)"/>
+  <!-- Subtle grid -->
+  <path d="M48 0 L48 192 M96 0 L96 192 M144 0 L144 192 M0 48 L192 48 M0 96 L192 96 M0 144 L192 144" stroke="#7c6ff7" stroke-width="0.3" opacity="0.15"/>
+  <!-- Glow circle -->
+  <circle cx="96" cy="96" r="50" fill="#7c6ff7" opacity="0.08"/>
+  <!-- Lightning bolt -->
+  <polygon points="108,32 76,100 96,100 84,160 116,88 96,88" fill="url(#bolt)" filter="url(#glow)" opacity="0.95"/>
+</svg>
