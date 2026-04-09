@@ -121,16 +121,16 @@
   .mask-fade {
     mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
   }
-}
 
   /* Legal page prose styles */
-  .prose-legal p { @apply text-sm text-secondary leading-relaxed; }
-  .prose-legal a { @apply text-indigo-DEFAULT hover:underline; }
+  .prose-legal p      { @apply text-sm text-secondary leading-relaxed; }
+  .prose-legal a      { color: var(--color-indigo); text-decoration: none; }
+  .prose-legal a:hover { text-decoration: underline; }
   .prose-legal strong { @apply font-semibold text-primary; }
-  .prose-legal code { @apply text-xs font-mono bg-surface px-1.5 py-0.5 rounded; }
-  .prose-legal table { @apply w-full text-sm; }
-  .prose-legal th { @apply text-left py-2 pr-4 font-semibold text-primary border-b border-border; }
-  .prose-legal td { @apply py-2.5 pr-4 text-secondary border-b border-border; }
+  .prose-legal code   { @apply text-xs font-mono bg-surface px-1.5 py-0.5 rounded; }
+  .prose-legal table  { @apply w-full text-sm; }
+  .prose-legal th     { @apply text-left py-2 pr-4 font-semibold text-primary border-b border-border; }
+  .prose-legal td     { @apply py-2.5 pr-4 text-secondary border-b border-border; }
 }
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Shield, Download, Search, RefreshCw, CheckCircle2, FileText, Cookie } from "lucide-react";
-import { apiClient } from "@/lib/api";
+import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
 interface ConsentRecord {
@@ -29,13 +29,8 @@ async function fetchConsents(page: number, search: string, policyType: string) {
     ...(search     && { search }),
     ...(policyType && { policyType }),
   });
-  const res = await apiClient.get(`/api/admin/consents?${params}`);
+  const res = await api.get(`/admin/consents?${params}`);
   return res.data as { records: ConsentRecord[]; total: number; page: number; limit: number };
-}
-
-function exportCSV() {
-  const token = useAuthStore.getState().token;
-  window.open(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/consents/export?token=${token}`, "_blank");
 }
 
 export default function CompliancePage() {
