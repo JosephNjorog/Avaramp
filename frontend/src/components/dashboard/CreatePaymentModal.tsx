@@ -11,10 +11,10 @@ import Button from "@/components/ui/Button";
 import { paymentsApi } from "@/lib/api";
 
 const schema = z.object({
-  amount:    z.string().min(1, "Required"),
-  currency:  z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
-  phone:     z.string().optional(),
-  reference: z.string().optional(),
+  amountFiat: z.string().min(1, "Required"),
+  currency:   z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
+  phone:      z.string().optional(),
+  reference:  z.string().optional(),
 });
 
 type Form = z.infer<typeof schema>;
@@ -31,7 +31,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { currency: "KES" },
+    defaultValues: { currency: "KES", amountFiat: "" },
   });
 
   const handleCopy = (text: string, key: string) => {
@@ -42,7 +42,12 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
 
   const onSubmit = async (data: Form) => {
     try {
-      const res = await paymentsApi.create(data, crypto.randomUUID());
+      const res = await paymentsApi.create({
+        amountFiat:   data.amountFiat,
+        currency:     data.currency,
+        phone:        data.phone,
+        reference:    data.reference,
+      }, crypto.randomUUID());
       setResult(res.data.data ?? res.data);
       onCreated();
       toast.success("Payment created");
@@ -111,42 +116,60 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
             </div>
           </div>
 
-          {/* Details grid */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: "Send USDC",   value: result.amountUsdc },
-              { label: "Fiat payout", value: `${result.fiatAmount} ${result.fiatCurrency ?? result.currency}` },
-              { label: "Network",     value: "Avalanche C" },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-surface rounded-lg p-3">
-                <p className="text-2xs text-muted mb-1">{label}</p>
-                <p className="text-xs font-medium text-primary">{value}</p>
-              </div>
-            ))}
+          {/* Conversion summary */}
+          <div className="bg-surface border border-border rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted">You receive</span>
+              <span className="font-semibold text-green-400">
+                {result.fiatAmount} {result.fiatCurrency ?? result.currency}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted">Customer sends</span>
+              <span className="font-semibold text-indigo-DEFAULT">
+                {parseFloat(result.amountUsdc).toFixed(4)} USDC
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted">Network</span>
+              <span className="text-secondary">Avalanche C-Chain</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-secondary bg-amber-500/8 border border-amber-500/15 rounded-lg px-3 py-2.5">
-            Customer must send <strong className="text-primary mx-1">exactly {result.amountUsdc} USDC</strong> to avoid rejection. Link expires in 30 minutes.
+            Customer must send <strong className="text-primary mx-1">exactly {parseFloat(result.amountUsdc).toFixed(4)} USDC</strong> to avoid rejection. Link expires in 30 minutes.
           </div>
 
           <Button onClick={handleClose} variant="secondary" className="w-full">Done</Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-primary">Amount</label>
-              <input {...register("amount")} type="number" step="0.01" placeholder="5000" className="input" />
-              {errors.amount && <p className="text-xs text-red-DEFAULT">{errors.amount.message}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-primary">Currency</label>
-              <select {...register("currency")} className="input">
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-primary">
+              Amount to receive
+              <span className="ml-1 font-normal text-muted">(in fiat — customer pays equivalent USDC)</span>
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  {...register("amountFiat")}
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  placeholder="5000"
+                  className="input w-full"
+                />
+              </div>
+              <select {...register("currency")} className="input w-28 shrink-0">
                 {["KES", "NGN", "GHS", "TZS", "UGX"].map((c) => (
                   <option key={c}>{c}</option>
                 ))}
               </select>
             </div>
+            {errors.amountFiat && <p className="text-xs text-red-DEFAULT">{errors.amountFiat.message}</p>}
+            <p className="text-xs text-muted">
+              e.g. enter 5000 KES — customer will be shown the exact USDC amount to send
+            </p>
           </div>
 
           <div className="space-y-1.5">
