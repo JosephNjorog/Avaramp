@@ -1,7 +1,8 @@
 export interface CreatePaymentDto {
   merchantId:      string;
   userId?:         string;
-  amountUsdc:      string;
+  amountFiat?:     string;  // fiat amount merchant wants to receive (e.g. 5000 KES)
+  amountUsdc?:     string;  // direct USDC input (legacy / API use)
   fiatCurrency:    string;
   phone?:          string;
   reference?:      string;

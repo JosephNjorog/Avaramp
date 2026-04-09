@@ -20,8 +20,25 @@ export class PaymentService {
       throw new ValidationError("Merchant not found or inactive");
     }
 
-    // Fetch live FX rate to calculate fiat amount
-    const { fiatAmount, rate } = await fxService.convert(dto.amountUsdc, dto.fiatCurrency);
+    // Determine amountUsdc and fiatAmount:
+    // - If merchant provided a fiat amount (e.g. 5000 KES), convert → USDC
+    // - If merchant provided USDC directly, convert → fiat for display
+    let amountUsdc: string;
+    let fiatAmount: string;
+    let rate: number;
+
+    if (dto.amountFiat) {
+      // Merchant entered fiat → derive USDC = fiatAmount / rate
+      rate       = await fxService.getRate(dto.fiatCurrency);
+      amountUsdc = (parseFloat(dto.amountFiat) / rate).toFixed(6);
+      fiatAmount = parseFloat(dto.amountFiat).toFixed(2);
+    } else {
+      // Legacy: merchant entered USDC → derive fiat = usdc * rate
+      const converted = await fxService.convert(dto.amountUsdc ?? "0", dto.fiatCurrency);
+      amountUsdc = dto.amountUsdc ?? "0";
+      fiatAmount = converted.fiatAmount;
+      rate       = converted.rate;
+    }
 
     // Generate a fresh deposit wallet for this payment
     const { address: depositAddress, encryptedPk: depositPk } =
@@ -33,7 +50,7 @@ export class PaymentService {
       id:             uuidv4(),
       merchantId:     dto.merchantId,
       userId:         dto.userId,
-      amountUsdc:     dto.amountUsdc,
+      amountUsdc,
       amountFiat:     fiatAmount,
       fiatCurrency:   dto.fiatCurrency,
       phone:          dto.phone,
@@ -41,6 +58,7 @@ export class PaymentService {
       depositAddress,
       depositPk,
       fxRate:         rate,
+      fiatAmount,
       expiresAt,
       idempotencyKey: dto.idempotencyKey,
       metadata:       dto.metadata,
