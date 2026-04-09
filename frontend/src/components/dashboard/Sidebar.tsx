@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ArrowLeftRight, Store,
-  BarChart2, Webhook, Settings, LogOut, Zap,
+  BarChart2, Webhook, Settings, LogOut, Zap, ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -15,8 +15,9 @@ const NAV = [
   { href: "/dashboard/payments",   icon: ArrowLeftRight,  label: "Payments"  },
   { href: "/dashboard/merchants",  icon: Store,           label: "Merchants" },
   { href: "/dashboard/analytics",  icon: BarChart2,       label: "Analytics" },
-  { href: "/dashboard/webhooks",   icon: Webhook,         label: "Webhooks"  },
-  { href: "/dashboard/settings",   icon: Settings,        label: "Settings"  },
+  { href: "/dashboard/webhooks",    icon: Webhook,      label: "Webhooks"   },
+  { href: "/dashboard/compliance",  icon: ShieldCheck,  label: "Compliance" },
+  { href: "/dashboard/settings",    icon: Settings,     label: "Settings"   },
 ];
 
 export default function Sidebar() {
