@@ -7,10 +7,11 @@ import { logger } from "../../shared/Utils/Logger";
 
 const repo = new SettlementRepository();
 
+// Use sandbox when MPESA_SANDBOX=true OR when not in production
 const MPESA_BASE =
-  process.env.NODE_ENV === "production"
-    ? "https://api.safaricom.co.ke"
-    : "https://sandbox.safaricom.co.ke";
+  process.env.MPESA_SANDBOX === "true" || process.env.NODE_ENV !== "production"
+    ? "https://sandbox.safaricom.co.ke"
+    : "https://api.safaricom.co.ke";
 
 export class SettlementService {
   // ── M-Pesa auth ────────────────────────────────────────────────────────────
@@ -35,6 +36,29 @@ export class SettlementService {
     }
 
     const merchant = payment.merchant;
+
+    // ── Skip mode: mark settled without calling M-Pesa (for testing / staging) ──
+    if (process.env.MPESA_SKIP_SETTLEMENT === "true") {
+      logger.warn({ paymentId }, "MPESA_SKIP_SETTLEMENT=true — marking settled without real M-Pesa call");
+      const fakeReceiptId = `SKIP_${Date.now()}`;
+      const settled = await repo.markSettled(paymentId, { mpesaReceiptId: fakeReceiptId });
+      await ledger.record({
+        paymentId,
+        type:       "MPESA_SETTLED",
+        debitAcct:  "escrow",
+        creditAcct: `merchant:${merchant.id}`,
+        amount:     payment.amountFiat as string,
+        currency:   payment.fiatCurrency as string,
+        metadata:   { mpesaReceiptId: fakeReceiptId, skipped: true },
+      });
+      await webhookQueue.add("deliver", {
+        paymentId,
+        event:   "payment.settled",
+        payload: { paymentId, mpesaReceiptId: fakeReceiptId, amount: payment.amountFiat, currency: payment.fiatCurrency },
+      });
+      return settled;
+    }
+
     const accessToken = await this.getAccessToken();
 
     // B2C — Business to Customer (sends money to a phone/till)
