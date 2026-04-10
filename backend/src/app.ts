@@ -9,6 +9,7 @@ import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
 import mpesaRoutes      from "./Modules/Settlements/mpesa.routes";
 import consentRoutes    from "./Modules/Consent/consent.routes";
+import adminRoutes      from "./Modules/admin/admin.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
 import { logger }       from "./shared/Utils/Logger";
 
@@ -37,6 +38,8 @@ app.use("/mpesa",       mpesaRoutes);
 // Consent recording & admin audit
 app.use("/consent",     consentRoutes);
 app.use("/api",         consentRoutes);
+// Admin dashboard routes
+app.use("/admin",       adminRoutes);
 
 // ── Global error handler ────────────────────────────────────────────────────
 app.use((err: any, req: any, res: any, _next: any) => {
