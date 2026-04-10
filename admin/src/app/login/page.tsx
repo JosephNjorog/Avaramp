@@ -33,7 +33,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await authApi.login(email, password);
-      const token: string = res.token;
+      const token: string = res?.data?.token ?? res?.token;
       const payload = decodeJwt(token) as { sub: string; email: string; role: string };
 
       if (payload.role !== "ADMIN") {
