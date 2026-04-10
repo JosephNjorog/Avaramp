@@ -5,4 +5,5 @@ export class MerchantRepository {
   async findByEmail(email: string)     { return prisma.merchant.findUnique({ where: { email } }); }
   async findByUserId(userId: string)   { return prisma.merchant.findUnique({ where: { userId } }); }
   async findAll()                      { return prisma.merchant.findMany({ where: { isActive: true } }); }
+  async update(id: string, data: any)  { return prisma.merchant.update({ where: { id }, data }); }
 }
