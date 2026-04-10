@@ -43,8 +43,15 @@ export const usersApi = {
 
 // ── Merchants ─────────────────────────────────────────────────────────────────
 export const merchantsApi = {
-  create: (data: unknown) => api.post("/merchants", data),
-  get:    (id: string)    => api.get(`/merchants/${id}`),
+  create:        (data: unknown) => api.post("/merchants", data),
+  get:           (id: string)    => api.get(`/merchants/${id}`),
+  me:            ()              => api.get("/merchants/me"),
+  updatePayout:  (data: {
+    payoutType?: "phone" | "till" | "paybill";
+    payoutAccount?: string;
+    payoutAccountRef?: string;
+    payoutCurrency?: string;
+  }) => api.patch("/merchants/payout", data),
 };
 
 // ── Payments ──────────────────────────────────────────────────────────────────
