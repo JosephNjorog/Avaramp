@@ -7,6 +7,7 @@ export type LedgerEntryType =
     | "FX_CONVERSION"
     | "PROTOCOL_FEE"
     | "MPESA_SETTLED"
+    | "PAYSTACK_SETTLED"
     | "REFUND_ISSUED"
     | "MERCHANT_WITHDRAWAL";
 
