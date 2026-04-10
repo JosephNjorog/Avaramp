@@ -54,7 +54,7 @@ export class AuthService {
       include: { merchant: true },
     });
 
-    const token = this.issueToken(user.id, user.email);
+    const token = this.issueToken(user.id, user.email, (user as any).role ?? 'USER');
     const { passwordHash: _h, merchant, ...safeUser } = user as any;
     return { user: safeUser, merchant, token };
   }
@@ -67,12 +67,12 @@ export class AuthService {
     const attempt        = hashPassword(dto.password, salt);
     if (attempt !== stored) throw new UnauthorizedError("Invalid email or password");
 
-    const token = this.issueToken(user.id, user.email);
+    const token = this.issueToken(user.id, user.email, user.role ?? 'USER');
     const { passwordHash: _h, ...safeUser } = user;
     return { user: safeUser, token };
   }
 
-  private issueToken(userId: string, email: string): string {
-    return jwt.sign({ sub: userId, email }, process.env.JWT_SECRET!, { expiresIn: TOKEN_TTL });
+  private issueToken(userId: string, email: string, role: string): string {
+    return jwt.sign({ sub: userId, email, role }, process.env.JWT_SECRET!, { expiresIn: TOKEN_TTL });
   }
 }
