@@ -7,7 +7,7 @@ import userRoutes       from "./Modules/users/user.routes";
 import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
-import mpesaRoutes      from "./Modules/Settlements/mpesa.routes";
+import paystackRoutes   from "./Modules/Settlements/paystack.routes";
 import consentRoutes    from "./Modules/Consent/consent.routes";
 import adminRoutes      from "./Modules/admin/admin.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
@@ -18,8 +18,10 @@ const app = express();
 // ── Global middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors());
-// M-Pesa sends raw bodies — parse before our JSON middleware for that path
-app.use("/mpesa", express.json());
+// Capture raw body for Paystack webhook signature verification
+app.use("/paystack/webhook", express.json({
+  verify: (req: any, _res, buf) => { req.rawBody = buf; },
+}));
 app.use(express.json());
 app.use(apiLimiter);
 
@@ -33,8 +35,8 @@ app.use("/users",       userRoutes);
 app.use("/merchants",   merchantRoutes);
 app.use("/payments",    paymentRoutes);
 app.use("/settlements", settlementRoutes);
-// M-Pesa Daraja callback endpoints (no auth — Safaricom calls these)
-app.use("/mpesa",       mpesaRoutes);
+// Paystack webhook (no auth — Paystack calls this, signature verified inside)
+app.use("/paystack",    paystackRoutes);
 // Consent recording & admin audit
 app.use("/consent",     consentRoutes);
 app.use("/api",         consentRoutes);
