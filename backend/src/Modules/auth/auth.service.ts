@@ -43,10 +43,13 @@ export class AuthService {
         passwordHash: `${salt}:${passwordHash}`,
         merchant: {
           create: {
-            name:          merchantName,
-            email:         dto.email,
-            walletAddress: `0x${crypto.randomBytes(20).toString("hex")}`,
-            mpesaTill:     dto.phone ?? "",
+            name:           merchantName,
+            email:          dto.email,
+            walletAddress:  `0x${crypto.randomBytes(20).toString("hex")}`,
+            mpesaTill:      dto.phone ?? "",
+            payoutAccount:  dto.phone ?? "",
+            payoutType:     "phone",
+            payoutCurrency: "KES",
             webhookSecret,
           },
         },
