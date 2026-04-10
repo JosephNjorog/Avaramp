@@ -1,5 +1,14 @@
 import { prisma } from "../../shared/database/prisma";
-import { startOfMonth, subDays, format } from "date-fns";
+
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function subDays(d: Date, n: number): Date {
+  const r = new Date(d); r.setDate(r.getDate() - n); return r;
+}
+function fmtDate(d: Date): string {
+  return d.toISOString().slice(0, 10); // "yyyy-MM-dd"
+}
 
 export class AdminService {
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -270,7 +279,7 @@ export class AdminService {
     const dayMap: Record<string, { usdcVolume: number; estimatedFee: number }> = {};
     for (const p of settledPayments) {
       if (!p.settledAt || p.settledAt < thirtyDaysAgo) continue;
-      const day = format(p.settledAt, "yyyy-MM-dd");
+      const day = fmtDate(p.settledAt);
       if (!dayMap[day]) dayMap[day] = { usdcVolume: 0, estimatedFee: 0 };
       const usdc = parseFloat(p.amountUsdc || "0");
       dayMap[day].usdcVolume += usdc;
