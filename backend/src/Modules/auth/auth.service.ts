@@ -67,7 +67,16 @@ export class AuthService {
     const attempt        = hashPassword(dto.password, salt);
     if (attempt !== stored) throw new UnauthorizedError("Invalid email or password");
 
-    const token = this.issueToken(user.id, user.email, user.role ?? 'USER');
+    // Read role via raw SQL to bypass any stale Prisma client cache
+    let role = user.role ?? 'USER';
+    try {
+      const rows = await prisma.$queryRawUnsafe<{ role: string }[]>(
+        `SELECT "role" FROM "User" WHERE id = $1`, user.id
+      );
+      if (rows?.[0]?.role) role = rows[0].role;
+    } catch { /* fall back to user.role */ }
+
+    const token = this.issueToken(user.id, user.email, role);
     const { passwordHash: _h, ...safeUser } = user;
     return { user: safeUser, token };
   }
