@@ -22,4 +22,16 @@ export class MerchantController {
       res.status(200).json({ success: true, data: result });
     } catch (err) { next(err); }
   }
+
+  async updatePayout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.sub as string;
+      const merchant = await service.getMerchantByUserId(userId);
+      const { payoutType, payoutAccount, payoutAccountRef, payoutCurrency } = req.body;
+      const result = await service.updatePayoutSettings(merchant.id, {
+        payoutType, payoutAccount, payoutAccountRef, payoutCurrency,
+      });
+      res.status(200).json({ success: true, data: result });
+    } catch (err) { next(err); }
+  }
 }
