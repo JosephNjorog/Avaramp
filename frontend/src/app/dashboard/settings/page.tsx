@@ -1,14 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Copy, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { usersApi } from "@/lib/api";
+import { usersApi, merchantsApi } from "@/lib/api";
 import Button from "@/components/ui/Button";
+
+// ── Payout form ───────────────────────────────────────────────────────────────
+const payoutSchema = z.object({
+  payoutType:       z.enum(["phone", "till", "paybill"]),
+  payoutAccount:    z.string().min(1, "Required"),
+  payoutAccountRef: z.string().optional(),
+  payoutCurrency:   z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
+});
+type PayoutForm = z.infer<typeof payoutSchema>;
 
 // ── Profile form ──────────────────────────────────────────────────────────────
 const profileSchema = z.object({
@@ -72,8 +81,31 @@ function Toggle({ label, sub, defaultOn }: { label: string; sub: string; default
 
 export default function SettingsPage() {
   const { user, setAuth, token } = useAuthStore();
-  const [showKey, setShowKey] = useState(false);
+  const [showKey, setShowKey]     = useState(false);
   const [keyCopied, setKeyCopied] = useState(false);
+
+  const payoutForm = useForm<PayoutForm>({
+    resolver: zodResolver(payoutSchema),
+    defaultValues: {
+      payoutType:     "till",
+      payoutAccount:  "",
+      payoutCurrency: "KES",
+    },
+  });
+  const payoutType = payoutForm.watch("payoutType");
+
+  useEffect(() => {
+    merchantsApi.me().then((res) => {
+      const m = res.data.data;
+      if (!m) return;
+      payoutForm.reset({
+        payoutType:       (m.payoutType     as PayoutForm["payoutType"])     ?? "till",
+        payoutAccount:    m.payoutAccount   ?? m.mpesaTill ?? "",
+        payoutAccountRef: m.payoutAccountRef ?? "",
+        payoutCurrency:   (m.payoutCurrency  as PayoutForm["payoutCurrency"]) ?? "KES",
+      });
+    }).catch(() => {});
+  }, []);
 
   // API key is derived from user id — in production expose a real key management endpoint
   const apiKey = `avr_live_${user?.id?.replace(/-/g, "").padEnd(32, "0").slice(0, 32) ?? "00000000000000000000000000000000"}`;
@@ -191,6 +223,74 @@ export default function SettingsPage() {
           <div className="py-4">
             <Button type="submit" size="sm" loading={passwordForm.formState.isSubmitting}>
               Update password
+            </Button>
+          </div>
+        </form>
+      </Section>
+
+      {/* Payout Settings */}
+      <Section title="Payout Settings">
+        <form onSubmit={payoutForm.handleSubmit(async (data) => {
+          try {
+            await merchantsApi.updatePayout(data);
+            toast.success("Payout settings saved");
+          } catch (err: any) {
+            toast.error(err.message || "Failed to save payout settings");
+          }
+        })}>
+          <Field label="Payout destination" sub="How you want to receive settlements">
+            <div className="flex gap-2 flex-wrap">
+              {(["till", "paybill", "phone"] as const).map((type) => (
+                <label key={type} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value={type}
+                    {...payoutForm.register("payoutType")}
+                    className="accent-indigo-500"
+                  />
+                  <span className="text-sm text-primary capitalize">
+                    {type === "till" ? "Till Number (Buy Goods)" : type === "paybill" ? "Paybill Number" : "Phone Number (M-Pesa/MoMo)"}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </Field>
+          <Field
+            label={payoutType === "till" ? "Till Number" : payoutType === "paybill" ? "Paybill Number" : "Phone Number"}
+            sub={payoutType === "till" ? "Your Lipa na M-Pesa till" : payoutType === "paybill" ? "Your paybill short code" : "e.g. +254712345678"}
+          >
+            <input
+              {...payoutForm.register("payoutAccount")}
+              type="text"
+              placeholder={payoutType === "phone" ? "+254 7XX XXX XXX" : payoutType === "till" ? "123456" : "400200"}
+              className="input"
+            />
+            {payoutForm.formState.errors.payoutAccount && (
+              <p className="text-xs text-red-DEFAULT mt-1">{payoutForm.formState.errors.payoutAccount.message}</p>
+            )}
+          </Field>
+          {payoutType === "paybill" && (
+            <Field label="Account Reference" sub="Account name or number shown to payer (e.g. company name)">
+              <input
+                {...payoutForm.register("payoutAccountRef")}
+                type="text"
+                placeholder="e.g. Your Company Name"
+                className="input"
+              />
+            </Field>
+          )}
+          <Field label="Settlement Currency" sub="Currency you receive payouts in">
+            <select {...payoutForm.register("payoutCurrency")} className="input">
+              <option value="KES">KES — Kenyan Shilling</option>
+              <option value="NGN">NGN — Nigerian Naira</option>
+              <option value="GHS">GHS — Ghanaian Cedi</option>
+              <option value="TZS">TZS — Tanzanian Shilling</option>
+              <option value="UGX">UGX — Ugandan Shilling</option>
+            </select>
+          </Field>
+          <div className="py-4">
+            <Button type="submit" size="sm" loading={payoutForm.formState.isSubmitting}>
+              Save payout settings
             </Button>
           </div>
         </form>
