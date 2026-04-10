@@ -13,6 +13,7 @@ model User {
   phone        String?
   passwordHash String?
   kycStatus    KycStatus @default(PENDING)
+  role         UserRole  @default(USER)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   payments     Payment[]
@@ -142,4 +143,9 @@ enum KycStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
