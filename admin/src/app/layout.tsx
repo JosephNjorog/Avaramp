@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "AvaRamp Admin",
   description: "AvaRamp internal admin dashboard",
   robots: "noindex,nofollow",
+  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

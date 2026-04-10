@@ -368,22 +368,20 @@ export class AdminService {
 
   async getConsentRecords(page = 1, limit = 20, search = "") {
     const skip = (page - 1) * limit;
-    const where: any = search
-      ? { user: { email: { contains: search, mode: "insensitive" } } }
-      : {};
 
-    const [records, total] = await Promise.all([
-      prisma.consentRecord.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { acceptedAt: "desc" },
-        include: { user: { select: { email: true } } },
-      }),
-      prisma.consentRecord.count({ where }),
-    ]);
+    // Fetch all then filter in-process to avoid Prisma nested relation filter issues
+    const all = await prisma.consentRecord.findMany({
+      orderBy: { acceptedAt: "desc" },
+      include: { user: { select: { email: true } } },
+    });
 
-    return { data: records, total, page, limit, totalPages: Math.ceil(total / limit) };
+    const filtered = search
+      ? all.filter((r) => r.user.email.toLowerCase().includes(search.toLowerCase()))
+      : all;
+
+    const total = filtered.length;
+    const data  = filtered.slice(skip, skip + limit);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async exportConsentCsv(): Promise<string> {
