@@ -7,24 +7,96 @@ import { logger } from "../../shared/Utils/Logger";
 
 const repo = new SettlementRepository();
 
-// Use sandbox when MPESA_SANDBOX=true OR when not in production
-const MPESA_BASE =
-  process.env.MPESA_SANDBOX === "true" || process.env.NODE_ENV !== "production"
-    ? "https://sandbox.safaricom.co.ke"
-    : "https://api.safaricom.co.ke";
+const PAYSTACK_BASE = "https://api.paystack.co";
+const PAYSTACK_SECRET = () => process.env.PAYSTACK_SECRET_KEY!;
+
+// ── Currency → Paystack config mapping ──────────────────────────────────────
+// payout type "phone"   → personal mobile money / M-Pesa
+// payout type "till"    → business till (buy-goods number)
+// payout type "paybill" → business paybill (pay-bill number + account ref)
+
+type PaystackRecipientType = "mpesa" | "mobile_money" | "nuban" | "ghipss";
+
+interface CurrencyConfig {
+  recipientType: PaystackRecipientType;
+  bankCode: string; // Paystack bank_code or mobile network code
+}
+
+const CURRENCY_MAP: Record<string, CurrencyConfig> = {
+  KES: { recipientType: "mpesa",        bankCode: "MPESA"    },
+  NGN: { recipientType: "nuban",        bankCode: "058"      }, // GTBank default; override per merchant
+  GHS: { recipientType: "mobile_money", bankCode: "MTN"      },
+  TZS: { recipientType: "mobile_money", bankCode: "VODACOM"  },
+  UGX: { recipientType: "mobile_money", bankCode: "AIRTEL"   },
+};
 
 export class SettlementService {
-  // ── M-Pesa auth ────────────────────────────────────────────────────────────
-  private async getAccessToken(): Promise<string> {
-    const credentials = Buffer.from(
-      `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
-    ).toString("base64");
+  // ── Create Paystack transfer recipient ─────────────────────────────────────
+  private async createRecipient(opts: {
+    name: string;
+    account: string;          // phone, till, or paybill number
+    accountRef?: string;      // paybill account reference
+    currency: string;
+    payoutType: string;       // "phone" | "till" | "paybill"
+    bankCode?: string;        // override for NGN bank codes
+  }): Promise<string> {
+    const currencyCfg = CURRENCY_MAP[opts.currency] ?? CURRENCY_MAP["KES"];
+    const bankCode = opts.bankCode ?? currencyCfg.bankCode;
 
-    const { data } = await axios.get(
-      `${MPESA_BASE}/oauth/v1/generate?grant_type=client_credentials`,
-      { headers: { Authorization: `Basic ${credentials}` } }
+    // For paybill: Paystack account_number = "<paybill>/<accountRef>"
+    const accountNumber =
+      opts.payoutType === "paybill" && opts.accountRef
+        ? `${opts.account}/${opts.accountRef}`
+        : opts.account;
+
+    const payload: Record<string, string> = {
+      type:           currencyCfg.recipientType,
+      name:           opts.name,
+      account_number: accountNumber,
+      bank_code:      bankCode,
+      currency:       opts.currency,
+    };
+
+    const { data } = await axios.post(
+      `${PAYSTACK_BASE}/transferrecipient`,
+      payload,
+      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET()}` } }
     );
-    return data.access_token;
+
+    if (!data.status) {
+      throw new Error(`Paystack create recipient failed: ${data.message}`);
+    }
+
+    return data.data.recipient_code;
+  }
+
+  // ── Initiate Paystack transfer ─────────────────────────────────────────────
+  private async initiateTransfer(opts: {
+    recipientCode: string;
+    amountInSmallestUnit: number;   // e.g. KES in cents (×100), NGN in kobo (×100)
+    currency: string;
+    reason: string;
+    reference: string;
+  }): Promise<string> {
+    const { data } = await axios.post(
+      `${PAYSTACK_BASE}/transfer`,
+      {
+        source:    "balance",
+        amount:    opts.amountInSmallestUnit,
+        recipient: opts.recipientCode,
+        reason:    opts.reason,
+        reference: opts.reference,
+        currency:  opts.currency,
+      },
+      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET()}` } }
+    );
+
+    if (!data.status) {
+      throw new Error(`Paystack transfer failed: ${data.message}`);
+    }
+
+    // data.data.transfer_code e.g. "TRF_xxxxxxxx"
+    return data.data.transfer_code as string;
   }
 
   // ── Core settlement ────────────────────────────────────────────────────────
@@ -32,75 +104,86 @@ export class SettlementService {
     const payment = await repo.findByPaymentId(paymentId);
     if (!payment) throw new NotFoundError("Payment");
     if (payment.status !== "CONFIRMED") {
-      throw new ValidationError(`Payment ${paymentId} is not in CONFIRMED state (current: ${payment.status})`);
+      throw new ValidationError(
+        `Payment ${paymentId} is not in CONFIRMED state (current: ${payment.status})`
+      );
     }
 
     const merchant = payment.merchant;
+    const currency  = (payment.fiatCurrency as string) || merchant.payoutCurrency || "KES";
+    const amountFiat = parseFloat(payment.amountFiat as string);
 
-    // ── Skip mode: mark settled without calling M-Pesa (for testing / staging) ──
-    if (process.env.MPESA_SKIP_SETTLEMENT === "true") {
-      logger.warn({ paymentId }, "MPESA_SKIP_SETTLEMENT=true — marking settled without real M-Pesa call");
+    // ── Skip mode: mark settled without calling Paystack (for testing / staging) ──
+    if (process.env.PAYSTACK_SKIP_SETTLEMENT === "true" || process.env.MPESA_SKIP_SETTLEMENT === "true") {
+      logger.warn({ paymentId }, "SKIP_SETTLEMENT=true — marking settled without real Paystack call");
       const fakeReceiptId = `SKIP_${Date.now()}`;
       const settled = await repo.markSettled(paymentId, { mpesaReceiptId: fakeReceiptId });
       await ledger.record({
         paymentId,
-        type:       "MPESA_SETTLED",
+        type:       "PAYSTACK_SETTLED",
         debitAcct:  "escrow",
         creditAcct: `merchant:${merchant.id}`,
         amount:     payment.amountFiat as string,
-        currency:   payment.fiatCurrency as string,
-        metadata:   { mpesaReceiptId: fakeReceiptId, skipped: true },
+        currency,
+        metadata:   { transferCode: fakeReceiptId, skipped: true },
       });
       await webhookQueue.add("deliver", {
         paymentId,
         event:   "payment.settled",
-        payload: { paymentId, mpesaReceiptId: fakeReceiptId, amount: payment.amountFiat, currency: payment.fiatCurrency },
+        payload: { paymentId, transferCode: fakeReceiptId, amount: payment.amountFiat, currency },
       });
       return settled;
     }
 
-    const accessToken = await this.getAccessToken();
+    // ── Determine payout destination ───────────────────────────────────────
+    const payoutType    = merchant.payoutType    || "till";
+    const payoutAccount = merchant.payoutAccount || merchant.mpesaTill;
+    const payoutRef     = merchant.payoutAccountRef ?? undefined;
 
-    // B2C — Business to Customer (sends money to a phone/till)
-    const payload = {
-      InitiatorName:       process.env.MPESA_INITIATOR_NAME,
-      SecurityCredential:  process.env.MPESA_SECURITY_CREDENTIAL,
-      CommandID:           "BusinessPayment",
-      Amount:              Math.round(parseFloat(payment.amountFiat as string)),
-      PartyA:              process.env.MPESA_SHORTCODE,
-      PartyB:              merchant.mpesaTill,
-      Remarks:             `AvaRamp settlement for payment ${paymentId}`,
-      QueueTimeOutURL:     process.env.MPESA_B2C_TIMEOUT_URL,
-      ResultURL:           process.env.MPESA_B2C_RESULT_URL,
-      Occasion:            paymentId,
-    };
+    // Paystack amounts are in the smallest currency unit (KES/GHS/etc × 100)
+    const amountInSmallestUnit = Math.round(amountFiat * 100);
 
-    const { data } = await axios.post(`${MPESA_BASE}/mpesa/b2c/v1/paymentrequest`, payload, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    // Step 1 — create recipient
+    const recipientCode = await this.createRecipient({
+      name:       merchant.name,
+      account:    payoutAccount,
+      accountRef: payoutRef,
+      currency,
+      payoutType,
     });
 
-    const mpesaReceiptId: string = data.ConversationID || data.OriginatorConversationID;
-    logger.info({ paymentId, mpesaReceiptId }, "M-Pesa B2C initiated");
+    logger.info({ paymentId, recipientCode, payoutType, payoutAccount }, "Paystack recipient created");
 
-    // Mark payment settled in DB
-    const settled = await repo.markSettled(paymentId, { mpesaReceiptId });
+    // Step 2 — initiate transfer
+    const transferCode = await this.initiateTransfer({
+      recipientCode,
+      amountInSmallestUnit,
+      currency,
+      reason:    `AvaRamp settlement – payment ${paymentId}`,
+      reference: paymentId, // idempotency key for Paystack
+    });
+
+    logger.info({ paymentId, transferCode }, "Paystack transfer initiated");
+
+    // Mark payment as SETTLED in DB (Paystack webhooks will confirm)
+    const settled = await repo.markSettled(paymentId, { mpesaReceiptId: transferCode });
 
     // Double-entry ledger: debit escrow, credit merchant
     await ledger.record({
       paymentId,
-      type:       "MPESA_SETTLED",
+      type:       "PAYSTACK_SETTLED",
       debitAcct:  "escrow",
       creditAcct: `merchant:${merchant.id}`,
       amount:     payment.amountFiat as string,
-      currency:   payment.fiatCurrency as string,
-      metadata:   { mpesaReceiptId },
+      currency,
+      metadata:   { transferCode, payoutType, payoutAccount },
     });
 
     // Notify merchant via webhook
     await webhookQueue.add("deliver", {
       paymentId,
       event:   "payment.settled",
-      payload: { paymentId, mpesaReceiptId, amount: payment.amountFiat, currency: payment.fiatCurrency },
+      payload: { paymentId, transferCode, amount: payment.amountFiat, currency },
     });
 
     return settled;
