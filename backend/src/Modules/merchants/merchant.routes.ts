@@ -5,5 +5,6 @@ const router     = Router();
 const controller = new MerchantController();
 router.post("/",     authenticate, controller.create.bind(controller));
 router.get("/me",    authenticate, controller.getMe.bind(controller));
-router.get("/:id",   authenticate, controller.getById.bind(controller));
+router.get("/:id",      authenticate, controller.getById.bind(controller));
+router.patch("/payout", authenticate, controller.updatePayout.bind(controller));
 export default router;
