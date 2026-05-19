@@ -1,48 +1,48 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
-import QRCode from "react-qr-code";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import {
-  Copy, Check, Clock, CheckCircle2, Loader2,
-  XCircle, RefreshCw, Zap, AlertCircle, ArrowRight,
+  Clock, CheckCircle2, Loader2,
+  XCircle, RefreshCw, Zap, AlertCircle, ArrowRight, Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { paymentsApi } from "@/lib/api";
-import WalletPay from "./WalletPay";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type PaymentStatus = "PENDING" | "CONFIRMED" | "SETTLED" | "FAILED" | "REFUNDED";
 
 interface Payment {
-  id: string;
-  status: PaymentStatus;
-  depositAddress: string;
-  amountUsdc: string;
-  fiatAmount: string;
-  fiatCurrency: string;
-  phone: string;
-  reference?: string;
-  expiresAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  id:               string;
+  status:           PaymentStatus;
+  depositAddress:   string;
+  amountUsdc:       string;
+  fiatAmount:       string;
+  fiatCurrency:     string;
+  phone?:           string;
+  reference?:       string;
+  expiresAt?:       string;
+  createdAt:        string;
+  updatedAt:        string;
+  authorizationUrl?: string;
+  paystackRef?:     string;
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<PaymentStatus, {
-  label: string;
+  label:    string;
   sublabel: string;
-  color: string;
-  bg: string;
-  border: string;
-  icon: React.ReactNode;
-  pulse: boolean;
+  color:    string;
+  bg:       string;
+  border:   string;
+  icon:     React.ReactNode;
+  pulse:    boolean;
 }> = {
   PENDING: {
-    label:    "Waiting for USDC",
-    sublabel: "Send the exact amount below to the deposit address",
+    label:    "Awaiting payment",
+    sublabel: "Click below to pay securely via Paystack",
     color:    "text-amber-400",
     bg:       "bg-amber-500/10",
     border:   "border-amber-500/20",
@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<PaymentStatus, {
     pulse:    true,
   },
   CONFIRMED: {
-    label:    "USDC received — processing payout",
+    label:    "Payment received — processing payout",
     sublabel: "Your mobile money payment is being prepared",
     color:    "text-blue-400",
     bg:       "bg-blue-500/10",
@@ -60,7 +60,7 @@ const STATUS_CONFIG: Record<PaymentStatus, {
   },
   SETTLED: {
     label:    "Payment complete",
-    sublabel: "Mobile money has been sent to your phone",
+    sublabel: "Mobile money has been sent to the merchant",
     color:    "text-green-400",
     bg:       "bg-green-500/10",
     border:   "border-green-500/20",
@@ -78,7 +78,7 @@ const STATUS_CONFIG: Record<PaymentStatus, {
   },
   REFUNDED: {
     label:    "Payment refunded",
-    sublabel: "Your USDC has been returned to the sending address",
+    sublabel: "Your payment has been returned.",
     color:    "text-secondary",
     bg:       "bg-surface",
     border:   "border-border",
@@ -107,32 +107,20 @@ function useCountdown(expiresAt?: string) {
   return { expired: remaining === 0, display: `${m}:${String(s).padStart(2, "0")}` };
 }
 
-// ── Copy hook ─────────────────────────────────────────────────────────────────
-
-function useCopy() {
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const copy = useCallback((text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-  }, []);
-  return { copy, copiedKey };
-}
-
 // ── Steps timeline ────────────────────────────────────────────────────────────
 
 const STEPS: { status: PaymentStatus; label: string }[] = [
-  { status: "PENDING",   label: "Awaiting USDC" },
+  { status: "PENDING",   label: "Pay" },
   { status: "CONFIRMED", label: "Processing" },
   { status: "SETTLED",   label: "Settled" },
 ];
 
 const STEP_ORDER: Record<PaymentStatus, number> = {
-  PENDING:  0,
+  PENDING:   0,
   CONFIRMED: 1,
-  SETTLED:  2,
-  FAILED:   1,
-  REFUNDED: 1,
+  SETTLED:   2,
+  FAILED:    1,
+  REFUNDED:  1,
 };
 
 function StepTimeline({ status }: { status: PaymentStatus }) {
@@ -142,9 +130,9 @@ function StepTimeline({ status }: { status: PaymentStatus }) {
   return (
     <div className="flex items-center gap-0 w-full">
       {STEPS.map((step, i) => {
-        const done    = i < current;
-        const active  = i === current && !failed;
-        const isFail  = i === current && failed;
+        const done   = i < current;
+        const active = i === current && !failed;
+        const isFail = i === current && failed;
 
         return (
           <div key={step.status} className="flex items-center flex-1 last:flex-none">
@@ -173,14 +161,28 @@ function StepTimeline({ status }: { status: PaymentStatus }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function PayPage() {
-  const { id } = useParams<{ id: string }>();
-  const [payment, setPayment]   = useState<Payment | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
-  const { copy, copiedKey }     = useCopy();
-  const countdown               = useCountdown(payment?.expiresAt);
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="flex items-center gap-3 text-secondary">
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-DEFAULT" />
+          <span className="text-sm">Loading payment…</span>
+        </div>
+      </div>
+    }>
+      <PayPageContent />
+    </Suspense>
+  );
+}
 
-  // Poll payment status every 3 seconds until terminal state
+function PayPageContent() {
+  const { id }          = useParams<{ id: string }>();
+  const searchParams    = useSearchParams();
+  const [payment, setPayment] = useState<Payment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+  const countdown             = useCountdown(payment?.expiresAt);
+
   const fetchPayment = useCallback(async () => {
     try {
       const res  = await paymentsApi.get(id);
@@ -211,6 +213,14 @@ export default function PayPage() {
 
     return () => clearInterval(interval);
   }, [fetchPayment]);
+
+  // ── Dev-mode skip: auto-confirm when Paystack redirects back with ?skip=1 ───
+  useEffect(() => {
+    const skip = searchParams?.get("skip");
+    if (skip !== "1" || !id) return;
+    // Hit the dev-confirm endpoint — only works when PAYSTACK_SKIP_SETTLEMENT=true
+    fetch(`/api/payments/${id}/dev-confirm`, { method: "POST" }).catch(() => {});
+  }, [searchParams, id]);
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
@@ -295,35 +305,23 @@ export default function PayPage() {
             </div>
           )}
 
-          {/* QR + payment details — only show while pending */}
+          {/* Paystack checkout — only while pending */}
           {isPending && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-card border border-border rounded-2xl overflow-hidden"
             >
-              {/* QR — EIP-681 URI so wallets auto-fill the transaction */}
-              <div className="flex flex-col items-center py-7 px-5 border-b border-border gap-4">
-                <div className="bg-white p-3 rounded-xl">
-                  <QRCode
-                    value={`ethereum:0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E@43114/transfer?address=${payment.depositAddress}&uint256=${Math.round(parseFloat(payment.amountUsdc) * 1_000_000)}`}
-                    size={160}
-                    level="M"
-                    bgColor="#ffffff"
-                    fgColor="#0c0c0e"
-                  />
-                </div>
-                <p className="text-xs text-secondary text-center max-w-xs">
-                  Scan with any Avalanche wallet — transaction is pre-filled automatically
-                </p>
-              </div>
-
-              {/* Amount */}
-              <div className="px-5 pt-4 pb-2">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted">Send exactly</span>
+              {/* Amount summary */}
+              <div className="px-5 pt-6 pb-4 border-b border-border">
+                <p className="text-xs text-muted mb-1">Amount to pay</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-primary tracking-tight">
+                    {parseFloat(payment.fiatAmount).toLocaleString()}
+                  </span>
+                  <span className="text-sm text-secondary font-medium">{payment.fiatCurrency}</span>
                   {countdown && !countdown.expired && (
-                    <span className={`text-xs font-mono font-medium flex items-center gap-1 ${
+                    <span className={`ml-auto text-xs font-mono font-medium flex items-center gap-1 ${
                       parseInt(countdown.display) < 5 ? "text-red-400" : "text-secondary"
                     }`}>
                       <Clock className="w-3 h-3" />
@@ -331,70 +329,31 @@ export default function PayPage() {
                     </span>
                   )}
                   {countdown?.expired && (
-                    <span className="text-xs text-red-400 font-medium">Expired</span>
+                    <span className="ml-auto text-xs text-red-400 font-medium">Expired</span>
                   )}
                 </div>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-3xl font-bold text-primary tracking-tight">
-                    {payment.amountUsdc}
-                  </span>
-                  <span className="text-sm text-secondary font-medium">USDC</span>
-                  <span className="ml-auto text-xs text-muted">
-                    ≈ {payment.fiatAmount} {payment.fiatCurrency}
-                  </span>
-                </div>
-
-                {/* Deposit address */}
-                <div className="bg-surface border border-border rounded-xl px-3 py-3 mb-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[10px] text-muted uppercase tracking-widest mb-1">
-                        Avalanche C-Chain address
-                      </p>
-                      <p className="text-xs font-mono text-indigo-DEFAULT break-all leading-relaxed">
-                        {payment.depositAddress}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => copy(payment.depositAddress, "address")}
-                      className="shrink-0 w-8 h-8 rounded-lg hover:bg-card transition-colors flex items-center justify-center"
-                    >
-                      {copiedKey === "address"
-                        ? <Check className="w-4 h-4 text-green-400" />
-                        : <Copy className="w-4 h-4 text-muted" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Copy amount button */}
-                <button
-                  onClick={() => copy(payment.amountUsdc, "amount")}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-DEFAULT hover:bg-indigo-dim text-white text-sm font-medium transition-all mb-3"
-                >
-                  {copiedKey === "amount"
-                    ? <><Check className="w-4 h-4" /> Amount copied</>
-                    : <><Copy className="w-4 h-4" /> Copy amount</>}
-                </button>
-
-                <p className="text-center text-[11px] text-muted pb-2">
-                  Network: Avalanche C-Chain · Token: USDC
-                </p>
               </div>
 
-              {/* Wallet connect + pay */}
-              <div className="px-5 pb-5">
-                <div className="flex items-center gap-3 my-4">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted">or pay directly</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <WalletPay
-                  depositAddress={payment.depositAddress}
-                  amountUsdc={payment.amountUsdc}
-                  fiatAmount={payment.fiatAmount}
-                  fiatCurrency={payment.fiatCurrency}
-                  onSuccess={() => {/* polling will catch the state change */}}
-                />
+              {/* Pay button */}
+              <div className="px-5 py-5 space-y-3">
+                {payment.authorizationUrl ? (
+                  <a
+                    href={payment.authorizationUrl}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-indigo-DEFAULT hover:bg-indigo-600 text-white text-sm font-semibold transition-all"
+                  >
+                    Pay {parseFloat(payment.fiatAmount).toLocaleString()} {payment.fiatCurrency} with Paystack
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted py-3">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Preparing checkout…
+                  </div>
+                )}
+
+                <p className="text-center text-[11px] text-muted">
+                  Secured by Paystack · Pay with card, mobile money, or bank transfer
+                </p>
               </div>
             </motion.div>
           )}
@@ -410,11 +369,10 @@ export default function PayPage() {
                 <Loader2 className="w-7 h-7 text-blue-400 animate-spin" />
               </div>
               <h2 className="text-base font-semibold text-primary mb-1">
-                USDC confirmed on Avalanche
+                Payment confirmed
               </h2>
               <p className="text-sm text-secondary mb-4">
-                Initiating {payment.fiatCurrency === "KES" ? "M-Pesa" : "mobile money"} payout to{" "}
-                <span className="text-primary font-medium">{payment.phone}</span>
+                Initiating {payment.fiatCurrency === "KES" ? "M-Pesa" : "mobile money"} payout to the merchant
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-muted">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
@@ -441,18 +399,18 @@ export default function PayPage() {
               </motion.div>
               <h2 className="text-lg font-bold text-primary mb-2">Payment complete</h2>
               <p className="text-sm text-secondary mb-6">
-                <span className="text-green-400 font-semibold">{payment.fiatAmount} {payment.fiatCurrency}</span>{" "}
-                has been sent to{" "}
-                <span className="text-primary font-medium">{payment.phone}</span>
+                <span className="text-green-400 font-semibold">
+                  {parseFloat(payment.fiatAmount).toLocaleString()} {payment.fiatCurrency}
+                </span>{" "}
+                has been settled to the merchant
               </p>
 
-              {/* Receipt grid */}
               <div className="grid grid-cols-2 gap-2 text-left mb-4">
                 {[
-                  { label: "Amount sent",   value: `${payment.amountUsdc} USDC` },
-                  { label: "You received",   value: `${payment.fiatAmount} ${payment.fiatCurrency}` },
-                  { label: "Network",        value: "Avalanche C-Chain" },
-                  { label: "Reference",      value: payment.reference || payment.id.slice(0, 12) },
+                  { label: "Amount paid",  value: `${parseFloat(payment.fiatAmount).toLocaleString()} ${payment.fiatCurrency}` },
+                  { label: "Method",       value: "Paystack" },
+                  { label: "Currency",     value: payment.fiatCurrency },
+                  { label: "Reference",    value: payment.reference || payment.id.slice(0, 12) },
                 ].map(({ label, value }) => (
                   <div key={label} className="bg-surface rounded-xl p-3">
                     <p className="text-[10px] text-muted mb-0.5">{label}</p>
@@ -461,9 +419,7 @@ export default function PayPage() {
                 ))}
               </div>
 
-              <p className="text-xs text-muted">
-                Check your {payment.fiatCurrency === "KES" ? "M-Pesa" : "mobile money"} messages for confirmation
-              </p>
+              <p className="text-xs text-muted">Thank you for your payment</p>
             </motion.div>
           )}
 
@@ -480,22 +436,22 @@ export default function PayPage() {
                   : <XCircle className="w-7 h-7 text-red-400" />}
               </div>
               <h2 className="text-base font-semibold text-primary mb-2">
-                {payment.status === "REFUNDED" ? "USDC refunded" : "Payment failed"}
+                {payment.status === "REFUNDED" ? "Payment refunded" : "Payment failed"}
               </h2>
               <p className="text-sm text-secondary">
                 {payment.status === "REFUNDED"
-                  ? "Your USDC has been returned to the sending wallet address."
-                  : "The settlement could not be completed. Contact the merchant for assistance."}
+                  ? "Your payment has been returned."
+                  : "The payment could not be completed. Contact the merchant for assistance."}
               </p>
             </motion.div>
           )}
 
-          {/* Footer note */}
+          {/* Footer */}
           <p className="text-center text-[11px] text-muted px-4">
             Powered by{" "}
             <span className="text-indigo-DEFAULT font-medium">AvaRamp</span>
             {" · "}
-            USDC on Avalanche C-Chain
+            Payments via Paystack
             {" · "}
             <a href="/docs" className="hover:text-secondary transition-colors">Docs</a>
           </p>
