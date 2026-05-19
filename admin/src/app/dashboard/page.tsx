@@ -133,7 +133,7 @@ export default function DashboardPage() {
         <StatsCard
           label="Estimated Fee Revenue"
           value={`$${(stats?.estimatedFeeRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subLabel="1% platform fee on settled USDC"
+          subLabel="1.5% platform fee on settled USDC"
           icon={<TrendingUp className="w-4 h-4" />}
           loading={loading}
           accent="indigo"
