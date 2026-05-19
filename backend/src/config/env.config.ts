@@ -8,12 +8,11 @@ const envSchema = z.object({
   OPERATOR_PRIVATE_KEY:     z.string().optional(),   // optional — used only for on-chain operator txns
   HD_MNEMONIC:              z.string().min(1),
   PAYMENT_GATEWAY_ADDRESS:  z.string().optional(),
-  // Paystack (collection + settlement provider)
+  // Paystack (merchant settlement provider)
   PAYSTACK_SECRET_KEY:      z.string().min(1),
   PAYSTACK_PUBLIC_KEY:      z.string().optional(),
   PAYSTACK_WEBHOOK_URL:     z.string().optional(),
   PAYSTACK_SKIP_SETTLEMENT: z.string().optional(),
-  FRONTEND_URL:             z.string().optional(),
   ENCRYPTION_KEY:           z.string().length(64),
   JWT_SECRET:               z.string().min(32),
   NODE_ENV:                 z.enum(["development", "production", "test"]),
