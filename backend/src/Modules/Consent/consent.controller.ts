@@ -8,7 +8,7 @@ const VALID_POLICIES  = ["TERMS", "PRIVACY", "COOKIES"] as const;
 // Record acceptance of one or more policy types at signup
 export async function recordConsent(req: Request, res: Response) {
   try {
-    const userId    = (req as any).user?.id;
+    const userId    = (req as any).user?.sub;
     const { types } = req.body as { types: string[] };
 
     if (!userId)               return res.status(401).json({ error: "Unauthorized" });
