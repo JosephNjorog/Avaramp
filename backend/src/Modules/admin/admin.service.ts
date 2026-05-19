@@ -1,4 +1,5 @@
 import { prisma } from "../../shared/database/prisma";
+import { webhookQueue } from "../../shared/queue/queues";
 
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -44,7 +45,7 @@ export class AdminService {
       (sum, p) => sum + parseFloat(p.amountUsdc || "0"),
       0
     );
-    const estimatedFeeRevenue = totalUsdcVolume * 0.01;
+    const estimatedFeeRevenue = totalUsdcVolume * 0.015;
 
     const statusMap: Record<string, number> = {};
     for (const g of paymentsByStatus) {
@@ -266,7 +267,7 @@ export class AdminService {
       (s, p) => s + parseFloat(p.amountUsdc || "0"),
       0
     );
-    const estimatedFeeRevenue = totalUsdcVolume * 0.01;
+    const estimatedFeeRevenue = totalUsdcVolume * 0.015;
 
     // Fiat volume by currency
     const fiatVolumeByCurrency: Record<string, number> = {};
@@ -283,7 +284,7 @@ export class AdminService {
       if (!dayMap[day]) dayMap[day] = { usdcVolume: 0, estimatedFee: 0 };
       const usdc = parseFloat(p.amountUsdc || "0");
       dayMap[day].usdcVolume += usdc;
-      dayMap[day].estimatedFee += usdc * 0.01;
+      dayMap[day].estimatedFee += usdc * 0.015;
     }
     const revenueByDay = Object.entries(dayMap)
       .map(([date, v]) => ({ date, ...v }))
@@ -292,7 +293,7 @@ export class AdminService {
     // Fee by merchant
     const feeByMerchant = merchantData.map((m) => {
       const volume = m.payments.reduce((s, p) => s + parseFloat(p.amountUsdc || "0"), 0);
-      const feeBps = m.feeOverrideBps ?? 100;
+      const feeBps = m.feeOverrideBps ?? 150;
       const fee = volume * (feeBps / 10000);
       const currencies = [...new Set(m.payments.map((p) => p.fiatCurrency))];
       return { merchantId: m.id, merchantName: m.name, volume, feeBps, fee, currencies };
@@ -358,10 +359,25 @@ export class AdminService {
   }
 
   async retryWebhook(id: string) {
-    return prisma.webhookDelivery.update({
+    const delivery = await prisma.webhookDelivery.findUnique({
+      where: { id },
+      include: { payment: { select: { id: true } } },
+    });
+    if (!delivery) throw Object.assign(new Error("Webhook delivery not found"), { statusCode: 404 });
+
+    await prisma.webhookDelivery.update({
       where: { id },
       data: { status: "RETRY", error: null },
     });
+
+    // Re-enqueue the webhook so the worker actually re-dispatches it
+    await webhookQueue.add("deliver", {
+      paymentId: delivery.paymentId,
+      event:     delivery.event,
+      payload:   {},  // WebhookService re-fetches payment data from DB
+    });
+
+    return { retried: true };
   }
 
   // ── Consent ───────────────────────────────────────────────────────────────
