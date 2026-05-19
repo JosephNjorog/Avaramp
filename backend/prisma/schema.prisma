@@ -57,6 +57,9 @@ model Payment {
   reference       String?
   depositAddress  String          @unique
   depositPk       String
+  // Paystack collection fields
+  paystackRef     String?         @unique
+  authorizationUrl String?
   status          PaymentStatus   @default(PENDING)
   expiresAt       DateTime
   confirmedTxHash String?
