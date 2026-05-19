@@ -39,6 +39,7 @@ export class PaymentRepository {
           id: true, merchantId: true, userId: true, amountUsdc: true,
           amountFiat: true, fiatCurrency: true, depositAddress: true,
           status: true, fxRate: true, fiatAmount: true, mpesaReceiptId: true,
+          phone: true, reference: true,
           expiresAt: true, confirmedAt: true, settledAt: true,
           createdAt: true, updatedAt: true, idempotencyKey: true,
         },
@@ -72,14 +73,21 @@ export class PaymentRepository {
 
     // Group by day
     const volumeByDay: Record<string, number> = {};
+    const currencyCount: Record<string, number> = {};
     for (const p of recentSettled) {
       const day = p.settledAt!.toISOString().slice(0, 10);
       volumeByDay[day] = (volumeByDay[day] || 0) + parseFloat(p.amountUsdc);
+      currencyCount[p.fiatCurrency] = (currencyCount[p.fiatCurrency] || 0) + 1;
     }
     const dailyVolume = Object.entries(volumeByDay)
       .map(([date, volume]) => ({ date, volume: parseFloat(volume.toFixed(2)) }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    return { total, settled, pending, failed, dailyVolume };
+    const currencyBreakdown = Object.entries(currencyCount).map(([currency, count]) => ({
+      currency,
+      count,
+    }));
+
+    return { total, settled, pending, failed, dailyVolume, currencyBreakdown };
   }
 }
