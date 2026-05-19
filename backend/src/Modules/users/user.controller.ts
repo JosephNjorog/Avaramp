@@ -36,6 +36,22 @@ export class UserController {
     } catch (err) { next(err); }
   }
 
+  // PATCH /users/me/password — change password
+  async changePassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.sub;
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, error: "currentPassword and newPassword are required" });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, error: "newPassword must be at least 8 characters" });
+      }
+      await service.changePassword(userId, currentPassword, newPassword);
+      res.json({ success: true });
+    } catch (err) { next(err); }
+  }
+
   // GET /users/me/webhooks — paginated webhook delivery log
   async webhooks(req: Request, res: Response, next: NextFunction) {
     try {
