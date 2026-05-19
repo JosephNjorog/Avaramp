@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -48,6 +48,15 @@ function SecretCell({ value }: { value: string }) {
 export default function MerchantsPage() {
   const [merchants, setMerchants] = useState<any[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    merchantsApi.me()
+      .then((res) => {
+        const m = res.data?.data ?? res.data;
+        if (m) setMerchants([m]);
+      })
+      .catch(() => {/* no merchant yet */});
+  }, []);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
