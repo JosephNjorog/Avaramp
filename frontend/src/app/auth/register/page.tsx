@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Zap, CheckCircle2, ExternalLink, Check } from "lucide-react";
 import toast from "react-hot-toast";
-import { authApi, merchantsApi } from "@/lib/api";
+import { authApi, merchantsApi, consentApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Button from "@/components/ui/Button";
 
@@ -113,6 +113,8 @@ export default function RegisterPage() {
       });
       const { user, token } = res.data.data ?? res.data;
       setAuth(user, token);
+      // Record legal consent — fire-and-forget (non-blocking for UX)
+      consentApi.record(["TERMS", "PRIVACY", "COOKIES"]).catch(() => {});
       setStep(2);
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
