@@ -9,15 +9,18 @@ import MobileSidebar from "@/components/dashboard/MobileSidebar";
 import { useAuthStore } from "@/store/auth";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router           = useRouter();
-  const token            = useAuthStore((s) => s.token);
+  const router              = useRouter();
+  const token               = useAuthStore((s) => s.token);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [hydrated, setHydrated]     = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
-    if (!token) router.replace("/auth/login");
-  }, [token, router]);
+    if (hydrated && !token) router.replace("/auth/login");
+  }, [hydrated, token, router]);
 
-  if (!token) return null;
+  if (!hydrated || !token) return null;
 
   return (
     <div className="flex min-h-screen bg-bg">
