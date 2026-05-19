@@ -99,7 +99,7 @@ export default function OverviewPage() {
                   labelStyle={{ color: "#9898a0" }}
                   itemStyle={{ color: "#7c6ff7" }}
                 />
-                <Area type="monotone" dataKey="v" name="Volume (USDC)" stroke="#7c6ff7" strokeWidth={2} fill="url(#grad)" dot={false} />
+                <Area type="monotone" dataKey="v" name="Volume" stroke="#7c6ff7" strokeWidth={2} fill="url(#grad)" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -134,7 +134,9 @@ export default function OverviewPage() {
                     <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
+                    <p className="text-xs font-medium text-primary">
+                      {parseFloat(p.fiatAmount ?? "0").toLocaleString()} {p.fiatCurrency ?? p.currency}
+                    </p>
                   </div>
                   <Badge status={p.status} />
                 </div>
