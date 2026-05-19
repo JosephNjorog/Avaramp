@@ -59,8 +59,30 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Toggle({ label, sub, defaultOn }: { label: string; sub: string; defaultOn: boolean }) {
-  const [on, setOn] = useState(defaultOn);
+const NOTIF_KEY = "avaramp_notif_prefs";
+
+function loadNotifPrefs(): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(NOTIF_KEY) ?? "{}");
+  } catch { return {}; }
+}
+
+function Toggle({ label, sub, defaultOn, storageKey }: { label: string; sub: string; defaultOn: boolean; storageKey: string }) {
+  const [on, setOn] = useState(() => {
+    if (typeof window === "undefined") return defaultOn;
+    const saved = loadNotifPrefs();
+    return storageKey in saved ? saved[storageKey] : defaultOn;
+  });
+
+  const toggle = () => {
+    const next = !on;
+    setOn(next);
+    const prefs = loadNotifPrefs();
+    prefs[storageKey] = next;
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(prefs));
+    toast.success(`${label} ${next ? "enabled" : "disabled"}`);
+  };
+
   return (
     <div className="flex items-center justify-between py-3.5 border-b border-border last:border-0">
       <div>
@@ -70,7 +92,7 @@ function Toggle({ label, sub, defaultOn }: { label: string; sub: string; default
       <button
         role="switch"
         aria-checked={on}
-        onClick={() => { setOn(!on); toast.success(`${label} ${!on ? "enabled" : "disabled"}`); }}
+        onClick={toggle}
         className={`relative w-9 h-5 rounded-full transition-colors ${on ? "bg-indigo-DEFAULT" : "bg-border"}`}
       >
         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${on ? "translate-x-4" : ""}`} />
@@ -107,8 +129,8 @@ export default function SettingsPage() {
     }).catch(() => {});
   }, []);
 
-  // API key is derived from user id — in production expose a real key management endpoint
-  const apiKey = `avr_live_${user?.id?.replace(/-/g, "").padEnd(32, "0").slice(0, 32) ?? "00000000000000000000000000000000"}`;
+  // The JWT token is the real bearer credential — use it in Authorization: Bearer headers
+  const apiKey = token ?? "";
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -173,8 +195,8 @@ export default function SettingsPage() {
       </Section>
 
       {/* API key */}
-      <Section title="API Key">
-        <Field label="Live key" sub="Include in Authorization: Bearer header">
+      <Section title="API Token">
+        <Field label="Bearer token" sub="Include in Authorization: Bearer header for API calls">
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-surface border border-border rounded-lg px-3 py-2.5 font-mono text-xs overflow-hidden">
               {showKey
@@ -195,14 +217,22 @@ export default function SettingsPage() {
             </button>
           </div>
           <p className="text-xs text-muted mt-2">
-            Never commit this key to source control or expose it in client-side code.
+            This token expires in 7 days. Never commit it to source control. Re-login to refresh it.
           </p>
         </Field>
       </Section>
 
       {/* Password */}
       <Section title="Password">
-        <form onSubmit={passwordForm.handleSubmit(() => { toast.success("Password changed"); passwordForm.reset(); })}>
+        <form onSubmit={passwordForm.handleSubmit(async (data) => {
+          try {
+            await usersApi.changePassword(data.current, data.next);
+            toast.success("Password changed");
+            passwordForm.reset();
+          } catch (err: any) {
+            toast.error(err.message || "Failed to change password");
+          }
+        })}>
           {[
             { name: "current" as const, label: "Current password",      ph: "••••••••" },
             { name: "next" as const,    label: "New password",           ph: "Minimum 8 characters" },
@@ -298,10 +328,10 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       <Section title="Notifications">
-        <Toggle label="Payment received"          sub="Email when USDC deposit is confirmed"          defaultOn />
-        <Toggle label="Settlement completed"      sub="Email when M-Pesa disbursement succeeds"       defaultOn />
-        <Toggle label="Webhook delivery failures" sub="Alert after 3 consecutive webhook failures"    defaultOn />
-        <Toggle label="Weekly summary"            sub="Digest of payment volume and settlements"      defaultOn={false} />
+        <Toggle label="Payment received"          sub="Email when USDC deposit is confirmed"                storageKey="payment_received"    defaultOn />
+        <Toggle label="Settlement completed"      sub="Email when mobile money disbursement succeeds"       storageKey="settlement_complete" defaultOn />
+        <Toggle label="Webhook delivery failures" sub="Alert after 3 consecutive webhook failures"          storageKey="webhook_failures"    defaultOn />
+        <Toggle label="Weekly summary"            sub="Digest of payment volume and settlements"            storageKey="weekly_summary"      defaultOn={false} />
       </Section>
     </div>
   );
