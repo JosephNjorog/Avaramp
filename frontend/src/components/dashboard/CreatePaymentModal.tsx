@@ -120,7 +120,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
           <div className="bg-surface border border-border rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted">You receive</span>
-              <span className="font-semibold text-green-400">
+              <span className="font-semibold text-green-DEFAULT">
                 {result.fiatAmount} {result.fiatCurrency ?? result.currency}
               </span>
             </div>

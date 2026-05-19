@@ -19,8 +19,8 @@ const CURRENCY_COLORS: Record<string, string> = {
 };
 
 const TT = {
-  contentStyle: { background: "#1a1a1d", border: "1px solid #26262a", borderRadius: 10, fontSize: 12 },
-  labelStyle: { color: "#9898a0" },
+  contentStyle: { background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 10, fontSize: 12 },
+  labelStyle: { color: "var(--color-secondary)" },
 };
 
 export default function AnalyticsPage() {
@@ -97,9 +97,9 @@ export default function AnalyticsPage() {
                   <stop offset="95%" stopColor="#7c6ff7" stopOpacity={0}    />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#26262a" />
-              <XAxis dataKey="day"    tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis                  tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="day"    tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis                  tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip {...TT} />
               <Area type="monotone" dataKey="volume" name="USDC" stroke="#7c6ff7" strokeWidth={2} fill="url(#gv)" dot={false} />
             </AreaChart>

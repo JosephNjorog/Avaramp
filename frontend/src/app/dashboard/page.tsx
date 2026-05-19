@@ -91,13 +91,13 @@ export default function OverviewPage() {
                     <stop offset="95%" stopColor="#7c6ff7" stopOpacity={0}   />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#26262a" />
-                <XAxis dataKey="day" tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#5c5c66", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="day" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: "#1a1a1d", border: "1px solid #26262a", borderRadius: 10, fontSize: 12 }}
-                  labelStyle={{ color: "#9898a0" }}
-                  itemStyle={{ color: "#7c6ff7" }}
+                  contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 10, fontSize: 12 }}
+                  labelStyle={{ color: "var(--color-secondary)" }}
+                  itemStyle={{ color: "var(--color-indigo)" }}
                 />
                 <Area type="monotone" dataKey="v" name="Volume (USDC)" stroke="#7c6ff7" strokeWidth={2} fill="url(#grad)" dot={false} />
               </AreaChart>

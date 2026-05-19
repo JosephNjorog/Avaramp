@@ -182,7 +182,7 @@ export default function WalletPay({
           {isConnected && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-xs text-green-400 font-medium">Wallet connected</p>
+                <p className="text-xs text-green-DEFAULT font-medium">Wallet connected</p>
                 <p className="text-xs text-muted font-mono mt-0.5">
                   {address?.slice(0, 6)}…{address?.slice(-4)}
                 </p>
@@ -280,8 +280,8 @@ export default function WalletPay({
   if (mode === "done") {
     return (
       <div className="rounded-2xl border border-green-500/20 bg-green-500/8 px-5 py-5 text-center">
-        <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
-        <p className="text-sm font-semibold text-green-400">USDC sent successfully</p>
+        <CheckCircle2 className="w-8 h-8 text-green-DEFAULT mx-auto mb-2" />
+        <p className="text-sm font-semibold text-green-DEFAULT">USDC sent successfully</p>
         <p className="text-xs text-secondary mt-1">
           AvaRamp is processing your {fiatCurrency} payout — page will update automatically
         </p>
@@ -302,11 +302,11 @@ export default function WalletPay({
   // ── Error ─────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="rounded-2xl border border-red-500/20 bg-red-500/8 px-5 py-5">
+    <div className="rounded-2xl border border-red-DEFAULT/20 bg-red-dim px-5 py-5">
       <div className="flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-red-DEFAULT shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-red-400">Transaction failed</p>
+          <p className="text-sm font-semibold text-red-DEFAULT">Transaction failed</p>
           <p className="text-xs text-secondary mt-1">{errorMsg}</p>
         </div>
       </div>

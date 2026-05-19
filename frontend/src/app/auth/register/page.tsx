@@ -66,7 +66,7 @@ function LegalCheckbox({
         </div>
         <span className="text-xs text-secondary leading-relaxed">{label}</span>
       </label>
-      {error && <p className="text-xs text-red-400 mt-1 ml-7">{error}</p>}
+      {error && <p className="text-xs text-red-DEFAULT mt-1 ml-7">{error}</p>}
     </div>
   );
 }
@@ -159,7 +159,7 @@ export default function RegisterPage() {
                     className="input"
                     autoFocus
                   />
-                  {errors.businessName && <p className="text-xs text-red-400">{errors.businessName.message}</p>}
+                  {errors.businessName && <p className="text-xs text-red-DEFAULT">{errors.businessName.message}</p>}
                 </div>
 
                 {/* Email */}
@@ -172,7 +172,7 @@ export default function RegisterPage() {
                     placeholder="you@business.com"
                     className="input"
                   />
-                  {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
+                  {errors.email && <p className="text-xs text-red-DEFAULT">{errors.email.message}</p>}
                 </div>
 
                 {/* Phone */}
@@ -187,7 +187,7 @@ export default function RegisterPage() {
                     placeholder="+254 7XX XXX XXX"
                     className="input"
                   />
-                  {errors.phone && <p className="text-xs text-red-400">{errors.phone.message}</p>}
+                  {errors.phone && <p className="text-xs text-red-DEFAULT">{errors.phone.message}</p>}
                 </div>
 
                 {/* Password */}
@@ -209,7 +209,7 @@ export default function RegisterPage() {
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
+                  {errors.password && <p className="text-xs text-red-DEFAULT">{errors.password.message}</p>}
                 </div>
 
                 {/* Confirm */}
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                     placeholder="••••••••"
                     className="input"
                   />
-                  {errors.confirm && <p className="text-xs text-red-400">{errors.confirm.message}</p>}
+                  {errors.confirm && <p className="text-xs text-red-DEFAULT">{errors.confirm.message}</p>}
                 </div>
 
                 {/* ── Legal acceptance ──────────────────────────────────────── */}
@@ -287,8 +287,8 @@ export default function RegisterPage() {
           ) : (
             /* ── Step 2: success ── */
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-5">
-                <CheckCircle2 className="w-8 h-8 text-green-400" />
+              <div className="w-16 h-16 rounded-full bg-green-dim border border-green-DEFAULT/20 flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 className="w-8 h-8 text-green-DEFAULT" />
               </div>
               <h1 className="text-2xl font-bold text-primary mb-2">You're all set</h1>
               <p className="text-sm text-secondary mb-8">

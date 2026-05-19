@@ -43,36 +43,36 @@ const STATUS_CONFIG: Record<PaymentStatus, {
   PENDING: {
     label:    "Waiting for USDC",
     sublabel: "Send the exact amount below to the deposit address",
-    color:    "text-amber-400",
-    bg:       "bg-amber-500/10",
-    border:   "border-amber-500/20",
+    color:    "text-amber-DEFAULT",
+    bg:       "bg-amber-dim",
+    border:   "border-amber-DEFAULT/20",
     icon:     <Clock className="w-5 h-5" />,
     pulse:    true,
   },
   CONFIRMED: {
     label:    "USDC received — processing payout",
     sublabel: "Your mobile money payment is being prepared",
-    color:    "text-blue-400",
-    bg:       "bg-blue-500/10",
-    border:   "border-blue-500/20",
+    color:    "text-blue-DEFAULT",
+    bg:       "bg-blue-dim",
+    border:   "border-blue-DEFAULT/20",
     icon:     <Loader2 className="w-5 h-5 animate-spin" />,
     pulse:    false,
   },
   SETTLED: {
     label:    "Payment complete",
     sublabel: "Mobile money has been sent to your phone",
-    color:    "text-green-400",
-    bg:       "bg-green-500/10",
-    border:   "border-green-500/20",
+    color:    "text-green-DEFAULT",
+    bg:       "bg-green-dim",
+    border:   "border-green-DEFAULT/20",
     icon:     <CheckCircle2 className="w-5 h-5" />,
     pulse:    false,
   },
   FAILED: {
     label:    "Payment failed",
     sublabel: "Something went wrong. Contact the merchant for a refund.",
-    color:    "text-red-400",
-    bg:       "bg-red-500/10",
-    border:   "border-red-500/20",
+    color:    "text-red-DEFAULT",
+    bg:       "bg-red-dim",
+    border:   "border-red-DEFAULT/20",
     icon:     <XCircle className="w-5 h-5" />,
     pulse:    false,
   },
@@ -229,8 +229,8 @@ export default function PayPage() {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-7 h-7 text-red-400" />
+          <div className="w-14 h-14 rounded-2xl bg-red-dim border border-red-DEFAULT/20 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-7 h-7 text-red-DEFAULT" />
           </div>
           <h1 className="text-lg font-semibold text-primary mb-2">Payment not found</h1>
           <p className="text-sm text-secondary">{error || "This payment link is invalid or has expired."}</p>
@@ -324,14 +324,14 @@ export default function PayPage() {
                   <span className="text-xs text-muted">Send exactly</span>
                   {countdown && !countdown.expired && (
                     <span className={`text-xs font-mono font-medium flex items-center gap-1 ${
-                      parseInt(countdown.display) < 5 ? "text-red-400" : "text-secondary"
+                      parseInt(countdown.display) < 5 ? "text-red-DEFAULT" : "text-secondary"
                     }`}>
                       <Clock className="w-3 h-3" />
                       {countdown.display}
                     </span>
                   )}
                   {countdown?.expired && (
-                    <span className="text-xs text-red-400 font-medium">Expired</span>
+                    <span className="text-xs text-red-DEFAULT font-medium">Expired</span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-2 mb-4">
@@ -369,7 +369,7 @@ export default function PayPage() {
                 {/* Copy amount button */}
                 <button
                   onClick={() => copy(payment.amountUsdc, "amount")}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-DEFAULT hover:bg-indigo-dim text-white text-sm font-medium transition-all mb-3"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-DEFAULT hover:opacity-90 text-white text-sm font-medium transition-all mb-3"
                 >
                   {copiedKey === "amount"
                     ? <><Check className="w-4 h-4" /> Amount copied</>
@@ -435,13 +435,13 @@ export default function PayPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.15, type: "spring", stiffness: 400, damping: 20 }}
-                className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4"
+                className="w-16 h-16 rounded-full bg-green-dim flex items-center justify-center mx-auto mb-4"
               >
-                <CheckCircle2 className="w-8 h-8 text-green-400" />
+                <CheckCircle2 className="w-8 h-8 text-green-DEFAULT" />
               </motion.div>
               <h2 className="text-lg font-bold text-primary mb-2">Payment complete</h2>
               <p className="text-sm text-secondary mb-6">
-                <span className="text-green-400 font-semibold">{payment.fiatAmount} {payment.fiatCurrency}</span>{" "}
+                <span className="text-green-DEFAULT font-semibold">{payment.fiatAmount} {payment.fiatCurrency}</span>{" "}
                 has been sent to{" "}
                 <span className="text-primary font-medium">{payment.phone}</span>
               </p>
@@ -474,10 +474,10 @@ export default function PayPage() {
               animate={{ opacity: 1, y: 0 }}
               className="bg-card border border-red-500/20 rounded-2xl p-6 text-center"
             >
-              <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-full bg-red-dim flex items-center justify-center mx-auto mb-4">
                 {payment.status === "REFUNDED"
                   ? <RefreshCw className="w-7 h-7 text-secondary" />
-                  : <XCircle className="w-7 h-7 text-red-400" />}
+                  : <XCircle className="w-7 h-7 text-red-DEFAULT" />}
               </div>
               <h2 className="text-base font-semibold text-primary mb-2">
                 {payment.status === "REFUNDED" ? "USDC refunded" : "Payment failed"}

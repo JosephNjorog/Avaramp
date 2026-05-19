@@ -55,7 +55,7 @@ function PlanCard({ name, badge, fee, subFee, description, features, cta, href, 
       <ul className="space-y-3 mb-8 flex-1">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2.5 text-sm">
-            <CheckCircle2 className={cn("w-4 h-4 shrink-0 mt-0.5", highlighted ? "text-indigo-DEFAULT" : "text-green-400")} />
+            <CheckCircle2 className={cn("w-4 h-4 shrink-0 mt-0.5", highlighted ? "text-indigo-DEFAULT" : "text-green-DEFAULT")} />
             <span className="text-secondary">{f}</span>
           </li>
         ))}
@@ -162,14 +162,14 @@ export default function PricingPage() {
                 <span className="text-secondary">Customer sends</span>
                 <span className="text-primary">19.23 USDC</span>
               </div>
-              <div className="flex justify-between mb-2 text-red-400">
+              <div className="flex justify-between mb-2 text-red-DEFAULT">
                 <span>AvaRamp fee (1.5%)</span>
                 <span>− 0.29 USDC</span>
               </div>
               <div className="border-t border-border my-2" />
               <div className="flex justify-between font-semibold">
                 <span className="text-secondary">Merchant receives</span>
-                <span className="text-green-400">2,462.50 KES</span>
+                <span className="text-green-DEFAULT">2,462.50 KES</span>
               </div>
               <p className="text-xs text-muted mt-3">
                 FX rate locked at payment creation. Settlement completes in under 3 minutes.
@@ -192,7 +192,7 @@ export default function PricingPage() {
                     <p className="text-sm font-semibold text-primary">{name} — {code}</p>
                     <p className="text-xs text-secondary mt-0.5">{via}</p>
                   </div>
-                  <span className="ml-auto text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full font-medium">
+                  <span className="ml-auto text-xs text-green-DEFAULT bg-green-dim border border-green-DEFAULT/20 px-2 py-0.5 rounded-full font-medium">
                     Live
                   </span>
                 </div>
