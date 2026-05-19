@@ -21,19 +21,19 @@ async function main() {
   const salt     = crypto.randomBytes(16).toString("hex");
   const hash     = hashPassword(password, salt);
 
-  // Upsert user
+  // Upsert user (ADMIN role so compliance page works)
   const user = await prisma.user.upsert({
     where:  { email },
-    update: { passwordHash: `${salt}:${hash}`, kycStatus: "VERIFIED" },
+    update: { passwordHash: `${salt}:${hash}`, kycStatus: "VERIFIED", role: "ADMIN" },
     create: {
       email,
       phone:        "+254712345678",
       passwordHash: `${salt}:${hash}`,
       kycStatus:    "VERIFIED",
-      role:         "USER",
+      role:         "ADMIN",
     },
   });
-  console.log("✓ User:", user.email);
+  console.log("✓ User:", user.email, "| role:", user.role);
 
   // Upsert merchant
   const merchant = await prisma.merchant.upsert({
@@ -53,6 +53,31 @@ async function main() {
     },
   });
   console.log("✓ Merchant:", merchant.name, "| till:", merchant.payoutAccount);
+
+  // Seed consent records
+  const consentTypes = [
+    { policyType: "TERMS",   version: "2026-01-15" },
+    { policyType: "PRIVACY", version: "2026-01-15" },
+    { policyType: "COOKIES", version: "2026-01-15" },
+  ];
+  const existingConsents = await prisma.consentRecord.count({ where: { userId: user.id } });
+  if (existingConsents === 0) {
+    for (const c of consentTypes) {
+      await prisma.consentRecord.create({
+        data: {
+          userId:    user.id,
+          policyType:c.policyType,
+          version:   c.version,
+          acceptedAt:new Date("2026-01-15T10:32:00Z"),
+          ipAddress: "41.90.64.1",
+          userAgent: "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36",
+        },
+      });
+    }
+    console.log("✓ Consent records: 3 created");
+  } else {
+    console.log("  skip (exists): consent records");
+  }
 
   // Helper: fake deposit address per payment
   const addr = (n: number) => `0xAva${String(n).padStart(38, "0")}`;
@@ -76,6 +101,8 @@ async function main() {
     { ref: "Demo-Live",  fiat: "500.00",  usdc: "3.850000",  currency: "KES", status: "PENDING",   daysAgo: 0, depositN: 12 },
   ];
 
+  const createdPaymentIds: string[] = [];
+
   for (const p of paymentsData) {
     const createdAt = new Date(now);
     createdAt.setDate(createdAt.getDate() - p.daysAgo);
@@ -85,9 +112,13 @@ async function main() {
     const existing = await prisma.payment.findFirst({
       where: { merchantId: merchant.id, reference: p.ref },
     });
-    if (existing) { console.log("  skip (exists):", p.ref); continue; }
+    if (existing) {
+      console.log("  skip (exists):", p.ref);
+      if (p.status === "SETTLED") createdPaymentIds.push(existing.id);
+      continue;
+    }
 
-    await prisma.payment.create({
+    const payment = await prisma.payment.create({
       data: {
         merchantId:    merchant.id,
         userId:        user.id,
@@ -109,6 +140,40 @@ async function main() {
       },
     });
     console.log("  ✓", p.status.padEnd(10), p.ref, `(${p.fiat} ${p.currency})`);
+    if (p.status === "SETTLED") createdPaymentIds.push(payment.id);
+  }
+
+  // Seed webhook deliveries for settled payments
+  const existingDeliveries = await prisma.webhookDelivery.count({
+    where: { payment: { userId: user.id } },
+  });
+
+  if (existingDeliveries === 0 && createdPaymentIds.length > 0) {
+    for (const paymentId of createdPaymentIds) {
+      await prisma.webhookDelivery.create({
+        data: {
+          paymentId,
+          event:  "payment.settled",
+          status: "delivered",
+          sentAt: new Date(now.getTime() - Math.random() * 5 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+    // Add one failed delivery for realism
+    if (createdPaymentIds.length > 0) {
+      await prisma.webhookDelivery.create({
+        data: {
+          paymentId: createdPaymentIds[0],
+          event:     "payment.settled",
+          status:    "failed",
+          error:     "Connection refused: webhook endpoint unreachable (attempt 3/3)",
+          sentAt:    new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+    console.log(`✓ Webhook deliveries: ${createdPaymentIds.length + 1} created`);
+  } else {
+    console.log("  skip (exists): webhook deliveries");
   }
 
   console.log("\n══════════════════════════════════════════");
@@ -116,6 +181,7 @@ async function main() {
   console.log("══════════════════════════════════════════");
   console.log("  Email   :", email);
   console.log("  Password:", password);
+  console.log("  Role    : ADMIN");
   console.log("══════════════════════════════════════════");
   console.log("  Merchant: AvaRamp Demo Store");
   console.log("  Till    : 174653 (KES)");
