@@ -34,7 +34,7 @@ export default function SplashScreen() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #0c0c0e 0%, #141420 50%, #0c0c0e 100%)",
+        background: "linear-gradient(135deg, #09090b 0%, #18181b 50%, #09090b 100%)",
         transition: "opacity 0.7s cubic-bezier(0.4,0,0.2,1)",
         opacity: phase === "exit" ? 0 : 1,
         pointerEvents: phase === "exit" ? "none" : "all",
@@ -46,7 +46,7 @@ export default function SplashScreen() {
         width: 300,
         height: 300,
         borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(124,111,247,0.25) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(129,140,248,0.28) 0%, transparent 70%)",
         animation: "splashGlow 1.8s ease-in-out infinite alternate",
       }} />
 
@@ -112,11 +112,11 @@ export default function SplashScreen() {
             fontSize: 28,
             fontWeight: 700,
             letterSpacing: "-0.02em",
-            color: "#f2f2f4",
+            color: "#fafafa",
             fontFamily: "system-ui, -apple-system, sans-serif",
             animation: phase === "hold" ? "splashText 0.5s ease forwards" : "none",
           }}>
-            <span style={{ color: "#a78bfa" }}>Ava</span>Ramp
+            <span style={{ color: "#818cf8" }}>Ava</span>Ramp
           </div>
           <div style={{
             fontSize: 13,

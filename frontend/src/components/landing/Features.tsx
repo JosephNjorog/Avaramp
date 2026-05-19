@@ -67,7 +67,7 @@ export default function Features() {
               initial={{ opacity: 0, y: 16 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: i * 0.07 }}
-              className="bg-card border border-border rounded-xl p-5 group hover:border-[#36363c] transition-colors duration-200"
+              className="bg-card border border-border rounded-xl p-5 group hover:border-muted transition-colors duration-200"
             >
               <div className="w-9 h-9 rounded-lg bg-indigo-dim border border-indigo-border flex items-center justify-center mb-4 group-hover:bg-indigo-dim/80 transition-colors">
                 <Icon className="w-4 h-4 text-indigo-DEFAULT" strokeWidth={1.5} />

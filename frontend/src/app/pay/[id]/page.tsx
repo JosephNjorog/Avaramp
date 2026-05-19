@@ -310,7 +310,7 @@ export default function PayPage() {
                     size={160}
                     level="M"
                     bgColor="#ffffff"
-                    fgColor="#0c0c0e"
+                    fgColor="#09090b"
                   />
                 </div>
                 <p className="text-xs text-secondary text-center max-w-xs">

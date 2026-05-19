@@ -42,7 +42,7 @@ export default function AnalyticsPage() {
   const distData = Object.entries(currencyMap).map(([name, count]) => ({
     name,
     value: totalCurrencyCount > 0 ? Math.round((count / totalCurrencyCount) * 100) : 0,
-    color: CURRENCY_COLORS[name] ?? "#9898a0",
+    color: CURRENCY_COLORS[name] ?? "var(--color-muted)",
   }));
 
   // Format dates for chart display

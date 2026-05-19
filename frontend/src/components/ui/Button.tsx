@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   primary:   "bg-indigo-DEFAULT text-white hover:opacity-90 active:opacity-80",
-  secondary: "bg-surface border border-border text-primary hover:bg-card hover:border-[#36363c]",
+  secondary: "bg-surface border border-border text-primary hover:bg-card hover:border-border/80",
   ghost:     "text-secondary hover:text-primary hover:bg-surface",
   danger:    "bg-red-dim text-red-DEFAULT border border-red-DEFAULT/20 hover:bg-red-DEFAULT/20",
-  outline:   "border border-border text-primary hover:border-[#36363c] hover:bg-surface",
+  outline:   "border border-border text-primary hover:border-border/80 hover:bg-surface",
 };
 
 const sizes = {
