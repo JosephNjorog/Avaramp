@@ -6,9 +6,10 @@ const router     = Router();
 const controller = new UserController();
 
 // Authenticated user's own profile
-router.get  ("/me",           authenticate, controller.me.bind(controller));
-router.patch("/me",           authenticate, controller.updateMe.bind(controller));
-router.get  ("/me/webhooks",  authenticate, controller.webhooks.bind(controller));
+router.get  ("/me",              authenticate, controller.me.bind(controller));
+router.patch("/me",              authenticate, controller.updateMe.bind(controller));
+router.patch("/me/password",     authenticate, controller.changePassword.bind(controller));
+router.get  ("/me/webhooks",     authenticate, controller.webhooks.bind(controller));
 
 // Generic CRUD (kept for admin use)
 router.post ("/",    controller.create.bind(controller));
