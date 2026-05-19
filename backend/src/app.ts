@@ -39,7 +39,6 @@ app.use("/settlements", settlementRoutes);
 app.use("/paystack",    paystackRoutes);
 // Consent recording & admin audit
 app.use("/consent",     consentRoutes);
-app.use("/api",         consentRoutes);
 // Admin dashboard routes
 app.use("/admin",       adminRoutes);
 
