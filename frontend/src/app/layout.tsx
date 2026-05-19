@@ -20,7 +20,7 @@ const jetbrains = JetBrains_Mono({
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)",  color: "#0c0c0e" },
+    { media: "(prefers-color-scheme: dark)",  color: "#09090b" },
     { media: "(prefers-color-scheme: light)", color: "#f8f8fb" },
   ],
   width: "device-width",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`dark ${inter.variable} ${jetbrains.variable}`}>
       <head>
         {/* Prevent flash of wrong theme — runs before React hydrates */}
         <script
@@ -82,10 +82,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `
               try {
                 var t = JSON.parse(localStorage.getItem('avaramp-theme') || '{}');
-                if (t.state && t.state.theme === 'dark') {
+                var theme = (t.state && t.state.theme) ? t.state.theme : 'dark';
+                if (theme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                } else {
                   document.documentElement.classList.add('dark');
                 }
-              } catch(e) {}
+              } catch(e) {
+                document.documentElement.classList.add('dark');
+              }
             `,
           }}
         />

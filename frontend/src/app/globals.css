@@ -37,29 +37,31 @@
 }
 
 .dark {
-  /* ── Dark theme ── */
-  --color-bg:            #0c0c0e;
-  --color-surface:       #141416;
-  --color-card:          #1a1a1d;
-  --color-border:        #26262a;
-  --color-primary:       #f2f2f4;
-  --color-secondary:     #9898a0;
-  --color-muted:         #5c5c66;
+  /* ── Dark theme — Zinc Dark palette ── */
+  --color-bg:            #09090b;
+  --color-surface:       #18181b;
+  --color-card:          #27272a;
+  --color-border:        #3f3f46;
+  --color-primary:       #fafafa;
+  --color-secondary:     #a1a1aa;
+  --color-muted:         #71717a;
 
-  --color-indigo:        #7c6ff7;
-  --color-indigo-dim:    rgba(124,111,247,0.08);
-  --color-indigo-border: rgba(124,111,247,0.25);
+  /* Brighter indigo for dark backgrounds */
+  --color-indigo:        #818cf8;
+  --color-indigo-dim:    rgba(129,140,248,0.10);
+  --color-indigo-border: rgba(129,140,248,0.30);
 
-  --color-green:         #3dd68c;
-  --color-green-dim:     rgba(61,214,140,0.12);
-  --color-amber:         #f5a623;
-  --color-amber-dim:     rgba(245,166,35,0.12);
-  --color-red:           #f56060;
-  --color-red-dim:       rgba(245,96,96,0.12);
+  /* Status colors — vibrant on dark */
+  --color-green:         #34d399;
+  --color-green-dim:     rgba(52,211,153,0.12);
+  --color-amber:         #fbbf24;
+  --color-amber-dim:     rgba(251,191,36,0.12);
+  --color-red:           #f87171;
+  --color-red-dim:       rgba(248,113,113,0.12);
   --color-blue:          #60a5fa;
   --color-blue-dim:      rgba(96,165,250,0.12);
 
-  --shadow-menu:         rgba(0,0,0,0.6);
+  --shadow-menu:         rgba(0,0,0,0.8);
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -145,7 +147,7 @@
   .animate-delay-500 { animation-delay: 500ms; }
 
   .gradient-brand {
-    background: linear-gradient(135deg, #7c6ff7 0%, #60a5fa 100%);
+    background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-blue) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
