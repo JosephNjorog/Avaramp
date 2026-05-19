@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, RefreshCw, ArrowLeftRight } from "lucide-react";
 import { paymentsApi } from "@/lib/api";
-import { formatDate, truncateAddress } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { SkeletonTable } from "@/components/ui/Skeleton";
@@ -40,8 +40,7 @@ export default function PaymentsPage() {
     const q = search.toLowerCase();
     return (
       p.id?.toLowerCase().includes(q) ||
-      p.reference?.toLowerCase().includes(q) ||
-      p.depositAddress?.toLowerCase().includes(q)
+      p.reference?.toLowerCase().includes(q)
     );
   });
 
@@ -51,7 +50,7 @@ export default function PaymentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-primary">Payments</h1>
-          <p className="text-sm text-muted mt-0.5">All USDC payment requests</p>
+          <p className="text-sm text-muted mt-0.5">All payment requests</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -73,7 +72,7 @@ export default function PaymentsPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by ID, reference, or address"
+            placeholder="Search by ID or reference"
             className="input pl-9 h-9 text-xs"
           />
         </div>
@@ -123,18 +122,12 @@ export default function PaymentsPage() {
                     <Badge status={p.status} />
                   </div>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
-                    <p className="text-xs text-muted">{p.fiatAmount} {p.currency}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-2xs text-muted font-mono truncate">{p.id?.slice(0, 20)}…</p>
+                    <p className="text-xs font-medium text-primary">
+                      {parseFloat(p.fiatAmount ?? "0").toLocaleString()} {p.fiatCurrency ?? p.currency}
+                    </p>
                     <p className="text-2xs text-muted shrink-0">{formatDate(p.createdAt)}</p>
                   </div>
-                  {p.depositAddress && (
-                    <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded block truncate">
-                      {truncateAddress(p.depositAddress)}
-                    </code>
-                  )}
+                  <p className="text-2xs text-muted font-mono truncate">{p.id?.slice(0, 20)}…</p>
                 </div>
               ))}
             </div>
@@ -142,14 +135,14 @@ export default function PaymentsPage() {
             {/* Desktop table */}
             <div className="hidden sm:block overflow-x-auto">
               {/* Column headers */}
-              <div className="grid grid-cols-[1fr_100px_140px_80px] gap-4 px-5 py-2.5 border-b border-border">
-                {["Payment", "Amount", "Address", "Status"].map((h) => (
+              <div className="grid grid-cols-[1fr_120px_160px_80px] gap-4 px-5 py-2.5 border-b border-border">
+                {["Payment", "Amount", "Link", "Status"].map((h) => (
                   <span key={h} className="text-2xs font-semibold text-muted uppercase tracking-wider">{h}</span>
                 ))}
               </div>
               <div className="divide-y divide-border">
                 {filtered.map((p: any) => (
-                  <div key={p.id} className="grid grid-cols-[1fr_100px_140px_80px] gap-4 items-center px-5 py-3.5 hover:bg-surface/60 transition-colors">
+                  <div key={p.id} className="grid grid-cols-[1fr_120px_160px_80px] gap-4 items-center px-5 py-3.5 hover:bg-surface/60 transition-colors">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary truncate">
                         {p.reference || <span className="text-muted">No reference</span>}
@@ -158,15 +151,19 @@ export default function PaymentsPage() {
                       <p className="text-2xs text-muted">{formatDate(p.createdAt)}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-primary">{p.amountUsdc} USDC</p>
-                      <p className="text-2xs text-muted">{p.fiatAmount} {p.currency}</p>
+                      <p className="text-xs font-medium text-primary">
+                        {parseFloat(p.fiatAmount ?? "0").toLocaleString()} {p.fiatCurrency ?? p.currency}
+                      </p>
                     </div>
-                    <div>
-                      {p.depositAddress ? (
-                        <code className="text-2xs font-mono text-secondary bg-surface px-1.5 py-0.5 rounded">
-                          {truncateAddress(p.depositAddress)}
-                        </code>
-                      ) : <span className="text-2xs text-muted">—</span>}
+                    <div className="min-w-0">
+                      <a
+                        href={`/pay/${p.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-2xs font-mono text-indigo-DEFAULT hover:underline truncate block"
+                      >
+                        /pay/{p.id?.slice(0, 12)}…
+                      </a>
                     </div>
                     <Badge status={p.status} />
                   </div>
