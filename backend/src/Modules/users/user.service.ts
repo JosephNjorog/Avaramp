@@ -1,6 +1,15 @@
+import crypto from "crypto";
 import { UserRepository } from "./user.repository";
-import { ConflictError, NotFoundError } from "../../shared/Utils/Errors";
+import { ConflictError, NotFoundError, UnauthorizedError } from "../../shared/Utils/Errors";
 import { prisma } from "../../shared/database/prisma";
+
+const ITERATIONS = 100_000;
+const KEY_LEN    = 64;
+const DIGEST     = "sha512";
+
+function hashPassword(password: string, salt: string): string {
+  return crypto.pbkdf2Sync(password, salt, ITERATIONS, KEY_LEN, DIGEST).toString("hex");
+}
 
 const repo = new UserRepository();
 
@@ -43,6 +52,23 @@ export class UserService {
         ...(dto.phone !== undefined && { phone: dto.phone }),
       },
       select: { id: true, email: true, phone: true, kycStatus: true, createdAt: true, updatedAt: true },
+    });
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } }) as any;
+    if (!user) throw new NotFoundError("User");
+
+    const [salt, stored] = (user.passwordHash as string).split(":");
+    if (hashPassword(currentPassword, salt) !== stored) {
+      throw new UnauthorizedError("Current password is incorrect");
+    }
+
+    const newSalt = crypto.randomBytes(16).toString("hex");
+    const newHash = hashPassword(newPassword, newSalt);
+    await prisma.user.update({
+      where: { id: userId },
+      data:  { passwordHash: `${newSalt}:${newHash}` },
     });
   }
 
