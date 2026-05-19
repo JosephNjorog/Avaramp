@@ -35,8 +35,10 @@ export const authApi = {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const usersApi = {
-  me:          ()           => api.get("/users/me"),
-  update:      (data: unknown) => api.patch("/users/me", data),
+  me:             ()           => api.get("/users/me"),
+  update:         (data: unknown) => api.patch("/users/me", data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.patch("/users/me/password", { currentPassword, newPassword }),
   webhooks:    (params?: { limit?: number; offset?: number }) =>
     api.get("/users/me/webhooks", { params }),
 };
@@ -69,6 +71,11 @@ export const paymentsApi = {
   }) => api.get("/payments", { params }),
   analytics: (params?: { merchantId?: string }) =>
     api.get("/payments/analytics", { params }),
+};
+
+// ── Consent ───────────────────────────────────────────────────────────────────
+export const consentApi = {
+  record: (types: string[]) => api.post("/consent", { types }),
 };
 
 // ── Settlements ───────────────────────────────────────────────────────────────
