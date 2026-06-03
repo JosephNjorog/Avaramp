@@ -8,6 +8,8 @@ export type LedgerEntryType =
     | "PROTOCOL_FEE"
     | "MPESA_SETTLED"
     | "PAYSTACK_SETTLED"
+    | "DARAJA_INITIATED"
+    | "DARAJA_SETTLED"
     | "REFUND_ISSUED"
     | "MERCHANT_WITHDRAWAL";
 
