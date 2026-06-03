@@ -8,6 +8,7 @@ import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
 import paystackRoutes   from "./Modules/Settlements/paystack.routes";
+import darajaRoutes     from "./Modules/Settlements/daraja.routes";
 import consentRoutes    from "./Modules/Consent/consent.routes";
 import adminRoutes      from "./Modules/admin/admin.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
@@ -37,6 +38,8 @@ app.use("/payments",    paymentRoutes);
 app.use("/settlements", settlementRoutes);
 // Paystack webhook (no auth — Paystack calls this, signature verified inside)
 app.use("/paystack",    paystackRoutes);
+// Daraja callbacks (no auth — Safaricom calls these directly)
+app.use("/daraja",      darajaRoutes);
 // Consent recording & admin audit
 app.use("/consent",     consentRoutes);
 // Admin dashboard routes

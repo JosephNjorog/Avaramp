@@ -4,6 +4,7 @@ import { ledger } from "../../shared/database/ledger";
 import { webhookQueue } from "../../shared/queue/queues";
 import { NotFoundError, ValidationError } from "../../shared/Utils/Errors";
 import { logger } from "../../shared/Utils/Logger";
+import { darajaService, DarajaService } from "../blockchain/daraja.service";
 
 const repo = new SettlementRepository();
 
@@ -140,6 +141,14 @@ export class SettlementService {
     const payoutAccount = merchant.payoutAccount || merchant.mpesaTill;
     const payoutRef     = merchant.payoutAccountRef ?? undefined;
 
+    // ── Route: KES with Daraja configured → use Daraja ────────────────────
+    if (currency === "KES" && DarajaService.isConfigured()) {
+      return this.settleViaDaraja({
+        paymentId, merchant, amountFiat, currency, payoutType, payoutAccount, payoutRef, payment,
+      });
+    }
+
+    // ── Route: everything else → use Paystack ────────────────────────────
     // Paystack amounts are in the smallest currency unit (KES/GHS/etc × 100)
     const amountInSmallestUnit = Math.round(amountFiat * 100);
 
@@ -160,7 +169,7 @@ export class SettlementService {
       amountInSmallestUnit,
       currency,
       reason:    `AvaRamp settlement – payment ${paymentId}`,
-      reference: paymentId, // idempotency key for Paystack
+      reference: paymentId,
     });
 
     logger.info({ paymentId, transferCode }, "Paystack transfer initiated");
@@ -168,7 +177,6 @@ export class SettlementService {
     // Mark payment as SETTLED in DB (Paystack webhooks will confirm)
     const settled = await repo.markSettled(paymentId, { mpesaReceiptId: transferCode });
 
-    // Double-entry ledger: debit escrow, credit merchant
     await ledger.record({
       paymentId,
       type:       "PAYSTACK_SETTLED",
@@ -179,12 +187,68 @@ export class SettlementService {
       metadata:   { transferCode, payoutType, payoutAccount },
     });
 
-    // Notify merchant via webhook
     await webhookQueue.add("deliver", {
       paymentId,
       event:   "payment.settled",
       payload: { paymentId, transferCode, amount: payment.amountFiat, currency },
     });
+
+    return settled;
+  }
+
+  // ── Daraja settlement path ────────────────────────────────────────────────
+  private async settleViaDaraja(opts: {
+    paymentId:    string;
+    merchant:     any;
+    amountFiat:   number;
+    currency:     string;
+    payoutType:   string;
+    payoutAccount:string;
+    payoutRef?:   string;
+    payment:      any;
+  }) {
+    const { paymentId, merchant, amountFiat, currency, payoutType, payoutAccount, payoutRef, payment } = opts;
+
+    let result;
+
+    if (payoutType === "phone") {
+      result = await darajaService.sendB2C({
+        phone:     payoutAccount,
+        amount:    amountFiat,
+        reference: paymentId,
+        remarks:   `AvaRamp – ${paymentId}`,
+      });
+    } else {
+      // till or paybill
+      result = await darajaService.sendB2B({
+        partyB:     payoutAccount,
+        amount:     amountFiat,
+        accountRef: payoutRef,
+        reference:  paymentId,
+        remarks:    `AvaRamp – ${paymentId}`,
+        type:       payoutType as "till" | "paybill",
+      });
+    }
+
+    // Store conversationId as receipt — replaced with real TransactionID on Daraja callback
+    const settled = await repo.markSettled(paymentId, {
+      mpesaReceiptId: result.originatorConversationId,
+    });
+
+    await ledger.record({
+      paymentId,
+      type:       "DARAJA_INITIATED",
+      debitAcct:  "escrow",
+      creditAcct: `merchant:${merchant.id}`,
+      amount:     payment.amountFiat as string,
+      currency,
+      metadata:   { conversationId: result.conversationId, payoutType, payoutAccount },
+    });
+
+    logger.info(
+      { paymentId, conversationId: result.conversationId, payoutType },
+      "Daraja settlement initiated — awaiting callback"
+    );
 
     return settled;
   }
