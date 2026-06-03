@@ -133,13 +133,17 @@ export default function StatusPage() {
       const data: HealthResponse = await res.json();
       setHealthData(data);
 
+      const c = data.checks ?? {};
+      const fallback = (v: CheckResult | undefined): Partial<ServiceCard> =>
+        v ? { status: v.status, latencyMs: v.latencyMs, error: v.error } : { status: "down", error: "No data" };
+
       setServices([
-        { key: "api",       ...SERVICE_META.api,       status: "up",           latencyMs: latency },
-        { key: "database",  ...SERVICE_META.database,  ...data.checks.database  },
-        { key: "queue",     ...SERVICE_META.queue,     ...data.checks.queue     },
-        { key: "avalanche", ...SERVICE_META.avalanche, ...data.checks.avalanche },
-        { key: "paystack",  ...SERVICE_META.paystack,  ...data.checks.paystack  },
-        { key: "dashboard", ...SERVICE_META.dashboard, status: "up",           latencyMs: latency },
+        { key: "api",       ...SERVICE_META.api,       status: "up", latencyMs: latency },
+        { key: "database",  ...SERVICE_META.database,  ...fallback(c.database)  },
+        { key: "queue",     ...SERVICE_META.queue,     ...fallback(c.queue)     },
+        { key: "avalanche", ...SERVICE_META.avalanche, ...fallback(c.avalanche) },
+        { key: "paystack",  ...SERVICE_META.paystack,  ...fallback(c.paystack)  },
+        { key: "dashboard", ...SERVICE_META.dashboard, status: "up", latencyMs: latency },
       ]);
     } catch {
       setApiLatency(undefined);
@@ -285,13 +289,13 @@ export default function StatusPage() {
           </div>
 
           {/* Response time summary */}
-          {healthData && (
+          {healthData && healthData.checks && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
               {[
-                { label: "API response",  value: `${apiLatency ?? healthData.responseMs}ms` },
-                { label: "DB latency",    value: `${healthData.checks.database.latencyMs}ms` },
-                { label: "Queue latency", value: `${healthData.checks.queue.latencyMs}ms` },
-                { label: "Process uptime",value: formatUptime(healthData.uptime) },
+                { label: "API response",   value: `${apiLatency ?? healthData.responseMs}ms` },
+                { label: "DB latency",     value: healthData.checks.database  ? `${healthData.checks.database.latencyMs}ms`  : "—" },
+                { label: "Queue latency",  value: healthData.checks.queue     ? `${healthData.checks.queue.latencyMs}ms`     : "—" },
+                { label: "Process uptime", value: formatUptime(healthData.uptime) },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-surface border border-border rounded-xl p-4 text-center">
                   <p className="text-xs text-muted mb-1">{label}</p>
