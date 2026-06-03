@@ -3,12 +3,11 @@ import Footer from "@/components/layout/Footer";
 
 export const metadata = { title: "Changelog — AvaRamp" };
 
-type ChangeType = "feature" | "fix" | "security" | "improvement";
+type ChangeType = "feature" | "fix" | "improvement";
 
 const TYPE_STYLES: Record<ChangeType, string> = {
   feature:     "bg-indigo-dim text-indigo-DEFAULT border-indigo-border",
   fix:         "bg-amber-dim text-amber-DEFAULT border-amber-DEFAULT/20",
-  security:    "bg-red-dim text-red-DEFAULT border-red-DEFAULT/20",
   improvement: "bg-green-dim text-green-DEFAULT border-green-DEFAULT/20",
 };
 
@@ -25,9 +24,6 @@ const RELEASES: Release[] = [
     date: "June 2026",
     label: "Latest",
     changes: [
-      { type: "security",    text: "Completed a comprehensive backend security review. Hardened webhook event validation, settlement callback handling, access control on admin routes, and sensitive field exposure across API responses." },
-      { type: "security",    text: "Strengthened outbound request handling — merchant webhook endpoints are now validated before dispatch." },
-      { type: "security",    text: "Rate limiting now correctly identifies client IPs in all deployment environments." },
       { type: "feature",     text: "Daraja API integration: full M-Pesa support for phone numbers (B2C), Till numbers, and Paybill numbers (B2B)." },
       { type: "improvement", text: "KES settlements auto-route through Daraja when configured; gracefully falls back to Paystack." },
       { type: "improvement", text: "Admin role changes take effect immediately without requiring re-authentication." },
@@ -52,7 +48,7 @@ const RELEASES: Release[] = [
       { type: "feature",  text: "Admin panel: fee tracking, merchant management, volume stats, consent audit log." },
       { type: "feature",  text: "Consent recording: TERMS, PRIVACY, and COOKIES acceptance logged at registration with IP and user-agent." },
       { type: "improvement", text: "Platform fee set to 1.5% (150 bps), deducted from USDC before settlement." },
-      { type: "improvement", text: "Paystack webhook: strengthened event verification and error handling." },
+      { type: "improvement", text: "Paystack webhook: improved event handling reliability and error reporting." },
     ],
   },
   {
