@@ -134,7 +134,7 @@ export default function StatusPage() {
       setHealthData(data);
 
       const c = data.checks ?? {};
-      const fallback = (v: CheckResult | undefined): Partial<ServiceCard> =>
+      const fallback = (v: CheckResult | undefined): { status: ServiceStatus; latencyMs?: number; error?: string } =>
         v ? { status: v.status, latencyMs: v.latencyMs, error: v.error } : { status: "down", error: "No data" };
 
       setServices([
