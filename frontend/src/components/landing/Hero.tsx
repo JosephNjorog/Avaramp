@@ -6,21 +6,22 @@ import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle, Copy, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 
-const API_SNIPPET = `curl -X POST https://api.avaramp.io/v1/payments \\
-  -H "Authorization: Bearer avr_live_..." \\
+const API_SNIPPET = `curl -X POST https://avarampbackend.onrender.com/payments \\
+  -H "Authorization: Bearer <your-jwt-token>" \\
+  -H "Idempotency-Key: order-abc-001" \\
   -d '{
-    "merchantId": "mer_01234",
-    "amount": "500",
-    "currency": "KES",
-    "phone": "+254712345678"
+    "amountFiat": "500",
+    "fiatCurrency": "KES",
+    "reference": "Order #001"
   }'`;
 
 const RESPONSE_SNIPPET = `{
   "depositAddress": "0x4f3d...8a1c",
-  "amountUsdc": "3.82",
+  "amountUsdc": "3.85",
   "fiatAmount": "500.00",
-  "currency": "KES",
-  "expiresAt": "2024-01-15T10:45:00Z"
+  "fiatCurrency": "KES",
+  "network": "avalanche-c-chain",
+  "expiresAt": "2026-06-04T10:45:00Z"
 }`;
 
 export default function Hero() {
@@ -104,8 +105,8 @@ export default function Hero() {
             >
               {[
                 "No KYC to get started",
-                "Live FX rates, no markup",
-                "< 2 min average settlement",
+                "Live FX rates, locked at creation",
+                "Under 3 min average settlement",
               ].map((text) => (
                 <div key={text} className="flex items-center gap-2">
                   <CheckCircle className="w-3.5 h-3.5 text-green-DEFAULT shrink-0" />
@@ -131,7 +132,7 @@ export default function Hero() {
                   <div className="w-3 h-3 rounded-full bg-green-DEFAULT/40" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xs text-muted font-mono">POST /v1/payments</span>
+                  <span className="text-2xs text-muted font-mono">POST /payments</span>
                   <button
                     onClick={handleCopy}
                     className="text-muted hover:text-secondary transition-colors p-0.5"
@@ -180,14 +181,14 @@ export default function Hero() {
                   <div className="w-1.5 h-1.5 rounded-full bg-green-DEFAULT animate-pulse" />
                   <span className="text-2xs text-green-DEFAULT font-medium">Deposit address created</span>
                 </div>
-                <span className="text-2xs text-muted ml-auto">Settlement in ~90s</span>
+                <span className="text-2xs text-muted ml-auto">Settlement in ~2–3 min</span>
               </div>
             </div>
 
-            {/* Floating stats */}
+            {/* Floating badge */}
             <div className="hidden sm:block absolute -bottom-4 -right-4 bg-card border border-border rounded-xl px-4 py-3 shadow-menu">
-              <div className="text-xs font-semibold text-primary">$2.4M+</div>
-              <div className="text-2xs text-muted">settled this month</div>
+              <div className="text-xs font-semibold text-primary">Avalanche C-Chain</div>
+              <div className="text-2xs text-muted">~2s finality · USDC native</div>
             </div>
           </motion.div>
         </div>
@@ -200,10 +201,10 @@ export default function Hero() {
           className="mt-16 lg:mt-20 pt-8 border-t border-border grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6"
         >
           {[
-            { value: "$2.4M+",  label: "Total settled"         },
-            { value: "< 2 min", label: "Average settlement"    },
+            { value: "< 3 min", label: "End-to-end settlement" },
             { value: "5",       label: "African currencies"    },
-            { value: "99.7%",   label: "Success rate"          },
+            { value: "3",       label: "Payout rails"          },
+            { value: "0%",      label: "Setup cost"            },
           ].map(({ value, label }) => (
             <div key={label}>
               <div className="text-2xl font-bold text-primary tracking-tight">{value}</div>

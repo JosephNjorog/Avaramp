@@ -8,11 +8,11 @@ import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const CURRENCIES = [
-  { flag: "🇰🇪", code: "KES", name: "Kenya", via: "M-Pesa Daraja B2C" },
-  { flag: "🇳🇬", code: "NGN", name: "Nigeria", via: "MTN MoMo" },
-  { flag: "🇬🇭", code: "GHS", name: "Ghana", via: "MTN MoMo" },
-  { flag: "🇹🇿", code: "TZS", name: "Tanzania", via: "Airtel Money" },
-  { flag: "🇺🇬", code: "UGX", name: "Uganda", via: "MTN / Airtel" },
+  { flag: "🇰🇪", code: "KES", name: "Kenya",    via: "M-Pesa (phone, till, paybill)" },
+  { flag: "🇳🇬", code: "NGN", name: "Nigeria",  via: "Bank transfer via Paystack"    },
+  { flag: "🇬🇭", code: "GHS", name: "Ghana",    via: "MTN Mobile Money"              },
+  { flag: "🇹🇿", code: "TZS", name: "Tanzania", via: "Vodacom M-Pesa"               },
+  { flag: "🇺🇬", code: "UGX", name: "Uganda",   via: "Airtel Money"                 },
 ];
 
 interface PlanProps {
@@ -233,8 +233,8 @@ export default function PricingPage() {
                   a: "No. You only need a mobile money account. AvaRamp handles the USDC custody and conversion. Your customers send crypto; you receive local currency.",
                 },
                 {
-                  q: "Is my float balance insured?",
-                  a: "USDC held in the PaymentGateway contract is non-custodial — we cannot move it except to settle or refund. All on-chain actions are verifiable on Snowtrace.",
+                  q: "Where does the USDC go after the customer sends it?",
+                  a: "Each payment gets a unique Avalanche C-Chain deposit address derived from AvaRamp's HD wallet. Once we detect the USDC on-chain, settlement to the merchant is initiated immediately. All transactions are publicly verifiable on Snowtrace.",
                 },
               ].map(({ q, a }) => (
                 <div key={q} className="border border-border rounded-xl p-5 bg-card">
