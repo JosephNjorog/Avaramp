@@ -13,6 +13,8 @@ import consentRoutes    from "./Modules/Consent/consent.routes";
 import adminRoutes      from "./Modules/admin/admin.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
 import { logger }       from "./shared/Utils/Logger";
+import { prisma }       from "./shared/database/prisma";
+import { connection }   from "./shared/queue/queues";
 
 const app = express();
 
@@ -30,8 +32,49 @@ app.use(express.json());
 app.use(apiLimiter);
 
 // ── Routes ──────────────────────────────────────────────────────────────────
-app.get("/health", (_, res) => {
-  res.json({ status: "ok", service: "avaramp-backend", timestamp: new Date().toISOString() });
+app.get("/health", async (_, res) => {
+  const t0 = Date.now();
+
+  type CheckResult = { status: "up" | "down"; latencyMs: number; error?: string };
+
+  const probe = async (fn: () => Promise<void>, timeoutMs = 4000): Promise<CheckResult> => {
+    const start = Date.now();
+    try {
+      await Promise.race([
+        fn(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs)),
+      ]);
+      return { status: "up", latencyMs: Date.now() - start };
+    } catch (e: any) {
+      return { status: "down", latencyMs: Date.now() - start, error: e.message };
+    }
+  };
+
+  const [database, queue, avalanche, paystack] = await Promise.all([
+    probe(async () => { await prisma.$queryRaw`SELECT 1`; }),
+    probe(async () => { await connection.ping(); }),
+    probe(async () => {
+      const r = await fetch("https://api.avax.network/ext/health", { signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    }),
+    probe(async () => {
+      const r = await fetch("https://api.paystack.co", { signal: AbortSignal.timeout(4000) });
+      if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
+    }),
+  ]);
+
+  const checks = { database, queue, avalanche, paystack };
+  const allUp  = Object.values(checks).every((c) => c.status === "up");
+  const anyDown = Object.values(checks).some((c) => c.status === "down");
+
+  res.status(allUp ? 200 : 503).json({
+    status:      allUp ? "ok" : anyDown ? "degraded" : "ok",
+    uptime:      Math.floor(process.uptime()),
+    service:     "avaramp-backend",
+    timestamp:   new Date().toISOString(),
+    responseMs:  Date.now() - t0,
+    checks,
+  });
 });
 
 app.use("/auth",        authRoutes);
