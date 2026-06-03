@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu, X, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuthStore } from "@/store/auth";
 import Button from "@/components/ui/Button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
@@ -20,7 +18,6 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const { token } = useAuthStore();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -60,20 +57,12 @@ export default function Navbar() {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
-          {token ? (
-            <Link href="/dashboard">
-              <Button size="sm" variant="secondary">Dashboard</Button>
-            </Link>
-          ) : (
-            <>
-              <Link href="/auth/login">
-                <Button size="sm" variant="ghost">Sign in</Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button size="sm">Get started</Button>
-              </Link>
-            </>
-          )}
+          <Link href="/auth/login">
+            <Button size="sm" variant="ghost">Sign in</Button>
+          </Link>
+          <Link href="/auth/register">
+            <Button size="sm">Get started</Button>
+          </Link>
         </div>
 
         {/* Mobile: theme toggle + hamburger */}
@@ -111,20 +100,12 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="pt-2 border-t border-border flex flex-col gap-2">
-                {token ? (
-                  <Link href="/dashboard" onClick={() => setOpen(false)}>
-                    <Button className="w-full" size="sm" variant="secondary">Dashboard</Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/auth/login" onClick={() => setOpen(false)}>
-                      <Button className="w-full" size="sm" variant="secondary">Sign in</Button>
-                    </Link>
-                    <Link href="/auth/register" onClick={() => setOpen(false)}>
-                      <Button className="w-full" size="sm">Get started</Button>
-                    </Link>
-                  </>
-                )}
+                <Link href="/auth/login" onClick={() => setOpen(false)}>
+                  <Button className="w-full" size="sm" variant="secondary">Sign in</Button>
+                </Link>
+                <Link href="/auth/register" onClick={() => setOpen(false)}>
+                  <Button className="w-full" size="sm">Get started</Button>
+                </Link>
               </div>
             </div>
           </motion.div>
