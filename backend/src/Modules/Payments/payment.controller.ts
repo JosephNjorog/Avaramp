@@ -45,8 +45,10 @@ export class PaymentController {
 
   async analytics(req: Request, res: Response, next: NextFunction) {
     try {
-      const merchantId = req.query.merchantId as string | undefined;
-      const result = await service.getAnalyticsSummary(merchantId);
+      const userId = (req as any).user?.sub;
+      // Enforce ownership — derive merchantId from the authenticated user, ignore query param
+      const merchant = await prisma.merchant.findUnique({ where: { userId }, select: { id: true } });
+      const result = await service.getAnalyticsSummary(merchant?.id);
       res.json({ success: true, data: result });
     } catch (err) { next(err); }
   }
