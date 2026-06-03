@@ -59,7 +59,9 @@ export class AuthService {
 
     const token = this.issueToken(user.id, user.email, (user as any).role ?? 'USER');
     const { passwordHash: _h, merchant, ...safeUser } = user as any;
-    return { user: safeUser, merchant, token };
+    // Strip sensitive merchant fields — webhookSecret should never be in a registration response
+    const { webhookSecret: _ws, payoutAccount: _pa, ...safeMerchant } = merchant ?? {};
+    return { user: safeUser, merchant: safeMerchant, token };
   }
 
   async login(dto: LoginDto) {
