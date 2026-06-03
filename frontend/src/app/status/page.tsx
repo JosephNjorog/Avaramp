@@ -8,7 +8,7 @@ import Footer from "@/components/layout/Footer";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type ServiceStatus = "up" | "down" | "checking";
+type ServiceStatus = "up" | "down" | "checking" | "unknown";
 
 interface CheckResult {
   status:    "up" | "down";
@@ -79,9 +79,18 @@ const STATUS_CONFIG = {
     dot:   "bg-muted",
     border:"border-border",
   },
+  unknown: {
+    label: "No data",
+    icon:  Clock,
+    text:  "text-muted",
+    bg:    "bg-surface",
+    dot:   "bg-muted",
+    border:"border-border",
+  },
 };
 
-function formatUptime(seconds: number): string {
+function formatUptime(seconds: number | undefined): string {
+  if (!seconds || isNaN(seconds)) return "—";
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -134,8 +143,9 @@ export default function StatusPage() {
       setHealthData(data);
 
       const c = data.checks ?? {};
+      // "unknown" when backend doesn't yet return per-service checks (old deploy)
       const fallback = (v: CheckResult | undefined): { status: ServiceStatus; latencyMs?: number; error?: string } =>
-        v ? { status: v.status, latencyMs: v.latencyMs, error: v.error } : { status: "down", error: "No data" };
+        v ? { status: v.status, latencyMs: v.latencyMs, error: v.error } : { status: "unknown" };
 
       setServices([
         { key: "api",       ...SERVICE_META.api,       status: "up", latencyMs: latency },
@@ -171,16 +181,18 @@ export default function StatusPage() {
     return () => clearInterval(interval);
   }, [check]);
 
-  // Derived state
-  const allUp      = services.every((s) => s.status === "up");
-  const anyDown    = services.some((s) => s.status === "down");
+  // Derived state — "unknown" services don't count as outages
   const anyChecking = services.some((s) => s.status === "checking");
-  const overall: ServiceStatus = anyChecking ? "checking" : anyDown ? "down" : "up";
+  const anyDown     = services.some((s) => s.status === "down");
+  const knownServices = services.filter((s) => s.status !== "unknown" && s.status !== "checking");
+  const allKnownUp  = knownServices.length > 0 && knownServices.every((s) => s.status === "up");
+  const overall: ServiceStatus = anyChecking ? "checking" : anyDown ? "down" : allKnownUp ? "up" : "unknown";
 
-  const OVERALL_MESSAGES = {
+  const OVERALL_MESSAGES: Record<ServiceStatus, { title: string; sub: string }> = {
     up:       { title: "All systems operational",     sub: "AvaRamp is running normally. Payments, settlements, and webhooks are all processing." },
     down:     { title: "Service disruption detected", sub: "One or more services are experiencing issues. Our team is investigating." },
     checking: { title: "Checking system status…",     sub: "Running live checks against all services." },
+    unknown:  { title: "Partial data available",      sub: "API is reachable. Detailed service checks will be available after the next backend deployment." },
   };
 
   const overallCfg     = STATUS_CONFIG[overall];
@@ -251,7 +263,10 @@ export default function StatusPage() {
                 <Activity className="w-3.5 h-3.5 text-secondary" />
                 <p className="text-xs font-semibold text-secondary uppercase tracking-wider">Services</p>
               </div>
-              <p className="text-xs text-muted">{services.filter((s) => s.status === "up").length}/{services.length} operational</p>
+              <p className="text-xs text-muted">
+                {services.filter((s) => s.status === "up").length}/
+                {services.filter((s) => s.status !== "unknown").length} operational
+              </p>
             </div>
 
             <ul className="divide-y divide-border">
