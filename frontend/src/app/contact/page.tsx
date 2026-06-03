@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, MessageSquare, Github, Twitter, Send, CheckCircle2, ArrowRight } from "lucide-react";
+import { Mail, MessageSquare, ExternalLink, X, Send, CheckCircle2, ArrowRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
@@ -23,14 +23,14 @@ const CHANNELS = [
     href: "mailto:dev@avaramp.io",
   },
   {
-    icon: Github,
+    icon: ExternalLink,
     title: "GitHub",
     desc: "Bug reports, feature requests, open issues.",
     contact: "github.com/JosephNjorog/Avaramp",
     href: "https://github.com/JosephNjorog/Avaramp",
   },
   {
-    icon: Twitter,
+    icon: X,
     title: "X / Twitter",
     desc: "Product updates, announcements, and community.",
     contact: "@avaramp",
