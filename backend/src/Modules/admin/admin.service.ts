@@ -135,7 +135,12 @@ export class AdminService {
   }
 
   async updateMerchant(id: string, data: { isActive?: boolean; feeOverrideBps?: number | null; webhookUrl?: string }) {
-    return prisma.merchant.update({ where: { id }, data });
+    const { isActive, feeOverrideBps, webhookUrl } = data;
+    if (webhookUrl) {
+      const { validateWebhookUrl } = await import("../Webhooks/webhook.service");
+      validateWebhookUrl(webhookUrl);
+    }
+    return prisma.merchant.update({ where: { id }, data: { isActive, feeOverrideBps, webhookUrl } });
   }
 
   // ── Payments ──────────────────────────────────────────────────────────────
@@ -185,7 +190,8 @@ export class AdminService {
       },
     });
     if (!payment) throw Object.assign(new Error("Payment not found"), { statusCode: 404 });
-    return payment;
+    const { depositPk: _pk, ...safe } = payment as any;
+    return safe;
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────
