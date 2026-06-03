@@ -94,8 +94,10 @@ export class PaymentService {
   async getPayment(id: string) {
     const payment = await repo.findById(id);
     if (!payment) throw new NotFoundError("Payment");
-    const { depositPk: _pk, ...safe } = payment as any;
-    return safe;
+    // Strip encrypted private key + sensitive merchant fields from public response
+    const { depositPk: _pk, merchant, ...safe } = payment as any;
+    const { webhookSecret: _ws, payoutAccount: _pa, payoutAccountRef: _par, ...safeMerchant } = merchant ?? {};
+    return { ...safe, merchant: safeMerchant };
   }
 
   async listPayments(filters: {
