@@ -25,16 +25,19 @@ function getParam(params: Array<{ Key: string; Value: unknown }>, key: string): 
 
 async function markSettledByConversation(conversationId: string, transactionId: string) {
   const payment = await prisma.payment.findFirst({
-    where: { mpesaReceiptId: conversationId },
+    where: {
+      mpesaReceiptId: conversationId,
+      // Only settle payments that are in CONFIRMED state — prevents replay attacks
+      // where an attacker POSTs a known conversationId to fraudulently settle payments
+      status: "CONFIRMED",
+    },
     include: { merchant: true },
   });
 
   if (!payment) {
-    logger.warn({ conversationId }, "Daraja callback: payment not found by conversationId");
+    logger.warn({ conversationId }, "Daraja callback: payment not found in CONFIRMED state — ignoring");
     return;
   }
-
-  if (payment.status === "SETTLED") return;
 
   await prisma.payment.update({
     where: { id: payment.id },
