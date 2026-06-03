@@ -3,13 +3,13 @@ import { Zap } from "lucide-react";
 
 const LINKS = {
   Product: [
-    { label: "Features",    href: "#features" },
-    { label: "Pricing",     href: "#pricing" },
+    { label: "Features",    href: "/#features" },
+    { label: "Pricing",     href: "/pricing" },
     { label: "Changelog",   href: "/changelog" },
     { label: "Status",      href: "/status" },
   ],
   Developers: [
-    { label: "API Reference", href: "/docs/api" },
+    { label: "API Reference", href: "/docs" },
     { label: "Quickstart",    href: "/docs/quickstart" },
     { label: "SDKs",          href: "/docs/sdks" },
     { label: "Webhooks",      href: "/docs/webhooks" },
