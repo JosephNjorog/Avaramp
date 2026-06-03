@@ -8,7 +8,9 @@ const isTls = redisUrl?.startsWith("rediss://");
 
 export const connection = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
-  ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
+  // TLS enabled for rediss:// URLs (Render KV, Upstash)
+  // rejectUnauthorized: true is the default — do not override it
+  ...(isTls ? { tls: {} } : {}),
 });
 
 connection.on("error", (err) => {
