@@ -9,7 +9,12 @@ function verifyPaystackSignature(rawBody: Buffer, signature: string): boolean {
   const secret = process.env.PAYSTACK_SECRET_KEY;
   if (!secret) return false;
   const hash = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
-  return hash === signature;
+  // Constant-time comparison to prevent timing attacks
+  try {
+    return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(signature, "hex"));
+  } catch {
+    return false; // length mismatch
+  }
 }
 
 /**
@@ -22,14 +27,20 @@ router.post("/webhook", async (req: Request, res: Response) => {
   res.sendStatus(200);
 
   try {
+    // Signature is mandatory — reject any request missing the header
     const signature = req.headers["x-paystack-signature"] as string;
-
-    if (process.env.PAYSTACK_SECRET_KEY && signature) {
-      const rawBody: Buffer = (req as any).rawBody ?? Buffer.from(JSON.stringify(req.body));
-      if (!verifyPaystackSignature(rawBody, signature)) {
-        logger.warn("Paystack webhook signature mismatch — ignoring");
-        return;
-      }
+    if (!signature) {
+      logger.warn("Paystack webhook: missing x-paystack-signature header — rejecting");
+      return;
+    }
+    const rawBody: Buffer = (req as any).rawBody;
+    if (!rawBody) {
+      logger.warn("Paystack webhook: rawBody not captured — rejecting");
+      return;
+    }
+    if (!verifyPaystackSignature(rawBody, signature)) {
+      logger.warn("Paystack webhook: signature mismatch — rejecting");
+      return;
     }
 
     const event = req.body?.event as string;
