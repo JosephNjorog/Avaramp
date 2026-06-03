@@ -16,6 +16,9 @@ import { logger }       from "./shared/Utils/Logger";
 
 const app = express();
 
+// Trust one proxy hop (Render's load balancer) so rate limiters use real client IPs
+app.set("trust proxy", 1);
+
 // ── Global middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors());
