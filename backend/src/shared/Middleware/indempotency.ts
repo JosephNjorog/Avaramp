@@ -5,8 +5,12 @@ export async function idempotency(req: Request, res: Response, next: NextFunctio
   const key = req.headers["idempotency-key"] as string;
   if (!key) return next();
 
-  const existing = await prisma.payment.findUnique({
-    where: { idempotencyKey: key },
+  const userId = (req as any).user?.sub as string | undefined;
+  const existing = await prisma.payment.findFirst({
+    where: {
+      idempotencyKey: key,
+      ...(userId ? { userId } : {}), // scope to authenticated user to prevent cross-merchant leakage
+    },
   });
 
   if (existing) {
