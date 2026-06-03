@@ -11,8 +11,7 @@ router.patch("/me",              authenticate, controller.updateMe.bind(controll
 router.patch("/me/password",     authenticate, controller.changePassword.bind(controller));
 router.get  ("/me/webhooks",     authenticate, controller.webhooks.bind(controller));
 
-// Generic CRUD (kept for admin use)
-router.post ("/",    controller.create.bind(controller));
+// Admin-only user management
 router.get  ("/:id", authenticate, controller.getById.bind(controller));
 
 export default router;
