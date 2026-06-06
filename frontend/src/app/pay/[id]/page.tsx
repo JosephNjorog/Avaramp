@@ -6,10 +6,12 @@ import QRCode from "react-qr-code";
 import {
   Copy, Check, Clock, CheckCircle2, Loader2,
   XCircle, RefreshCw, Zap, AlertCircle, ArrowRight,
+  X, HelpCircle, Building2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { paymentsApi } from "@/lib/api";
 import WalletPay from "./WalletPay";
+import { savePaymentToHistory } from "@/app/wallet/history/page";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -174,11 +176,19 @@ function StepTimeline({ status }: { status: PaymentStatus }) {
 
 export default function PayPage() {
   const { id } = useParams<{ id: string }>();
-  const [payment, setPayment]   = useState<Payment | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
-  const { copy, copiedKey }     = useCopy();
-  const countdown               = useCountdown(payment?.expiresAt);
+  const [payment, setPayment]         = useState<Payment | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState<string | null>(null);
+  const [hasMerchantToken, setHasMerchantToken] = useState(false);
+  const [merchantDismissed, setMerchantDismissed] = useState(false);
+  const { copy, copiedKey }           = useCopy();
+  const countdown                     = useCountdown(payment?.expiresAt);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("avaramp_token")) {
+      setHasMerchantToken(true);
+    }
+  }, []);
 
   // Poll payment status every 3 seconds until terminal state
   const fetchPayment = useCallback(async () => {
@@ -187,6 +197,17 @@ export default function PayPage() {
       const data = res.data?.data ?? res.data;
       setPayment(data);
       setError(null);
+      // Persist to payer history when settled
+      if (data.status === "SETTLED") {
+        savePaymentToHistory({
+          id:           data.id,
+          amountUsdc:   data.amountUsdc,
+          fiatAmount:   data.fiatAmount,
+          fiatCurrency: data.fiatCurrency,
+          status:       data.status,
+          reference:    data.reference,
+        });
+      }
       return data.status as PaymentStatus;
     } catch (err: any) {
       setError(err.message || "Payment not found");
@@ -263,6 +284,31 @@ export default function PayPage() {
       {/* Main */}
       <main className="flex-1 flex items-center justify-center p-4 py-8">
         <div className="w-full max-w-md space-y-4">
+
+          {/* Merchant warning — shown if merchant JWT detected */}
+          {hasMerchantToken && !merchantDismissed && (
+            <div className="flex items-start gap-3 rounded-2xl border px-4 py-3.5 bg-amber-dim border-amber-DEFAULT/20">
+              <Building2 className="w-5 h-5 text-amber-DEFAULT shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-DEFAULT">Are you the merchant?</p>
+                <p className="text-xs text-secondary mt-0.5">
+                  This page is for your customer to pay. You don&apos;t need to do anything here.
+                </p>
+                <a
+                  href="/dashboard"
+                  className="text-xs text-indigo-DEFAULT font-medium hover:underline mt-1.5 inline-flex items-center gap-1"
+                >
+                  Go to your dashboard <ArrowRight className="w-3 h-3" />
+                </a>
+              </div>
+              <button
+                onClick={() => setMerchantDismissed(true)}
+                className="text-muted hover:text-secondary transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Status card */}
           <AnimatePresence mode="wait">
@@ -395,6 +441,65 @@ export default function PayPage() {
                   fiatCurrency={payment.fiatCurrency}
                   onSuccess={() => {/* polling will catch the state change */}}
                 />
+
+                {/* New to crypto guide */}
+                <details className="mt-3 border border-border rounded-2xl overflow-hidden group">
+                  <summary className="px-5 py-3.5 cursor-pointer text-xs text-muted hover:text-secondary flex items-center gap-2 list-none select-none">
+                    <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+                    Don&apos;t have a crypto wallet yet?
+                  </summary>
+                  <div className="px-5 pb-5 border-t border-border">
+                    <p className="text-xs text-secondary pt-4 mb-4">
+                      To pay with USDC you need a free crypto wallet. It takes about 2 minutes:
+                    </p>
+                    <div className="space-y-3">
+                      {[
+                        {
+                          n: "1",
+                          text: "Download Core Wallet",
+                          sub: "Free app by Ava Labs — trusted, easy to use",
+                          href: "https://core.app",
+                        },
+                        {
+                          n: "2",
+                          text: "Create your wallet",
+                          sub: "Follow the in-app guide — takes 2 minutes",
+                        },
+                        {
+                          n: "3",
+                          text: "Add USDC to your wallet",
+                          sub: "Buy or transfer USDC on Avalanche C-Chain",
+                        },
+                        {
+                          n: "4",
+                          text: "Come back and connect",
+                          sub: "Tap \"or pay directly\" above to complete payment",
+                        },
+                      ].map(({ n, text, sub, href }) => (
+                        <div key={n} className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-indigo-dim flex items-center justify-center text-xs font-bold text-indigo-DEFAULT shrink-0 mt-0.5">
+                            {n}
+                          </div>
+                          <div>
+                            {href ? (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-indigo-DEFAULT hover:underline inline-flex items-center gap-1"
+                              >
+                                {text} <ArrowRight className="w-3 h-3" />
+                              </a>
+                            ) : (
+                              <p className="text-xs font-semibold text-primary">{text}</p>
+                            )}
+                            <p className="text-xs text-muted">{sub}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </details>
               </div>
             </motion.div>
           )}
