@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Copy, Check, ExternalLink } from "lucide-react";
+import QRCode from "react-qr-code";
 import toast from "react-hot-toast";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
@@ -74,10 +75,23 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
     >
       {result ? (
         <div className="space-y-4">
-          {/* Customer payment link — the main thing to share */}
-          <div className="bg-indigo-dim border border-indigo-border rounded-xl p-4">
-            <p className="text-xs text-muted mb-2 font-medium">Customer payment link</p>
-            <div className="flex items-center gap-2">
+          {/* QR code — merchant shows this to customer */}
+          <div className="bg-indigo-dim border border-indigo-border rounded-xl p-4 flex flex-col items-center gap-3">
+            <p className="text-xs text-muted font-medium self-start">Show this to your customer</p>
+            <div className="bg-white p-3 rounded-xl">
+              <QRCode
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/pay/${result.id}`}
+                size={180}
+                level="M"
+                bgColor="#ffffff"
+                fgColor="#09090b"
+              />
+            </div>
+            <p className="text-xs text-secondary text-center">
+              Customer scans → opens payment page → pays with their wallet
+            </p>
+            {/* Copyable link below the QR */}
+            <div className="w-full bg-card border border-indigo-border rounded-lg px-3 py-2 flex items-center gap-2">
               <code className="text-xs font-mono text-indigo-DEFAULT flex-1 break-all leading-relaxed">
                 {typeof window !== "undefined" ? window.location.origin : ""}/pay/{result.id}
               </code>
@@ -92,7 +106,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
               href={`/pay/${result.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center gap-1 text-xs text-indigo-DEFAULT hover:underline"
+              className="flex items-center gap-1 text-xs text-indigo-DEFAULT hover:underline"
             >
               Open customer page <ExternalLink className="w-3 h-3" />
             </a>
