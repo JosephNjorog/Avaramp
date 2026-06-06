@@ -3,6 +3,7 @@ import cors    from "cors";
 import helmet  from "helmet";
 
 import authRoutes       from "./Modules/auth/auth.routes";
+import siweRoutes       from "./Modules/auth/siwe.routes";
 import userRoutes       from "./Modules/users/user.routes";
 import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
@@ -78,6 +79,7 @@ app.get("/health", async (_, res) => {
 });
 
 app.use("/auth",        authRoutes);
+app.use("/auth/payer",  siweRoutes);
 app.use("/users",       userRoutes);
 app.use("/merchants",   merchantRoutes);
 app.use("/payments",    paymentRoutes);
