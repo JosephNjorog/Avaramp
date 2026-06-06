@@ -1,9 +1,31 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { Code2, Store, ArrowRight } from "lucide-react";
 
-const STEPS = [
+const MERCHANT_STEPS = [
+  {
+    icon: "💳",
+    title: "Enter the amount",
+    description:
+      "Type how much you want to receive — in KES, NGN, GHS, or your local currency. No crypto knowledge needed.",
+  },
+  {
+    icon: "🔲",
+    title: "Show the QR code",
+    description:
+      "A payment QR code appears instantly. Show your screen to the customer, or print it at your counter.",
+  },
+  {
+    icon: "✅",
+    title: "M-Pesa arrives automatically",
+    description:
+      "The moment your customer pays with crypto, we convert and send money straight to your M-Pesa. Zero action required.",
+  },
+];
+
+const DEV_STEPS = [
   {
     n: "01",
     title: "Create a payment",
@@ -39,7 +61,7 @@ const STEPS = [
     n: "03",
     title: "Auto-settle via M-Pesa",
     description:
-      "We convert at the locked rate and initiate an M-Pesa B2C transfer via Daraja. The full amount lands in the customer's mobile wallet. We fire payment.settled when complete.",
+      "We convert at the locked rate and initiate an M-Pesa B2C transfer via Daraja. The full amount lands in the recipient's mobile wallet. We fire payment.settled when complete.",
     code: `// Final webhook
 {
   "event": "payment.settled",
@@ -53,8 +75,9 @@ const STEPS = [
 ];
 
 export default function HowItWorks() {
-  const ref = useRef(null);
+  const ref    = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+  const [tab, setTab] = useState<"merchant" | "developer">("merchant");
 
   return (
     <section id="how-it-works" ref={ref} className="py-20 border-t border-border">
@@ -63,48 +86,125 @@ export default function HowItWorks() {
           initial={{ opacity: 0, y: 12 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.4 }}
-          className="mb-12"
+          className="mb-10"
         >
-          <p className="text-xs font-semibold text-indigo-DEFAULT uppercase tracking-widest mb-3">Integration</p>
+          <p className="text-xs font-semibold text-indigo-DEFAULT uppercase tracking-widest mb-3">
+            How it works
+          </p>
           <h2 className="text-3xl font-bold text-primary tracking-tight mb-4">
             Three steps, fully automated
           </h2>
-          <p className="text-secondary max-w-xl">
-            The entire flow — from USDC deposit to M-Pesa disbursement — happens without any manual
-            intervention. Every step fires a webhook so your app always knows what&apos;s happening.
+          <p className="text-secondary max-w-xl leading-relaxed">
+            The entire flow — from crypto payment to M-Pesa disbursement — happens
+            without any manual intervention. Merchants never touch crypto.
           </p>
+
+          <div className="flex items-center gap-1 bg-surface border border-border rounded-xl p-1 w-fit mt-6">
+            <button
+              onClick={() => setTab("merchant")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === "merchant"
+                  ? "bg-card text-primary shadow-sm border border-border"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              <Store className="w-4 h-4" />
+              For merchants
+            </button>
+            <button
+              onClick={() => setTab("developer")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === "developer"
+                  ? "bg-card text-primary shadow-sm border border-border"
+                  : "text-muted hover:text-secondary"
+              }`}
+            >
+              <Code2 className="w-4 h-4" />
+              For developers
+            </button>
+          </div>
         </motion.div>
 
-        <div className="space-y-6">
-          {STEPS.map(({ n, title, description, code }, i) => (
+        {tab === "merchant" && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {MERCHANT_STEPS.map((step, i) => (
+                <motion.div
+                  key={step.title}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
+                  className="bg-card border border-border rounded-2xl p-7 text-center hover:border-muted transition-colors"
+                >
+                  <div className="text-5xl mb-5">{step.icon}</div>
+                  <div className="text-xs font-bold text-indigo-DEFAULT uppercase tracking-widest mb-2">
+                    Step {i + 1}
+                  </div>
+                  <h3 className="text-base font-bold text-primary mb-3">{step.title}</h3>
+                  <p className="text-sm text-secondary leading-relaxed">{step.description}</p>
+                </motion.div>
+              ))}
+            </div>
             <motion.div
-              key={n}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5 bg-card border border-border rounded-xl p-4 sm:p-5 hover:border-muted transition-colors"
+              transition={{ duration: 0.4, delay: 0.35 }}
+              className="mt-8 flex flex-col sm:flex-row items-center gap-4"
             >
-              {/* Left */}
-              <div>
-                <span className="text-3xl font-bold text-border">{n}</span>
-                <h3 className="text-sm font-semibold text-primary mt-3 mb-2">{title}</h3>
-                <p className="text-sm text-secondary leading-relaxed">{description}</p>
-              </div>
-
-              {/* Right — code */}
-              <div className="bg-surface border border-border rounded-xl overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-border flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-border" />
-                  <div className="w-2 h-2 rounded-full bg-border" />
-                  <div className="w-2 h-2 rounded-full bg-border" />
-                </div>
-                <pre className="px-4 py-4 text-xs font-mono text-secondary leading-relaxed overflow-x-auto">
-                  <code>{code}</code>
-                </pre>
-              </div>
+              <a
+                href="/auth/register"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, var(--color-indigo) 0%, #3730a3 100%)" }}
+              >
+                Get started free <ArrowRight className="w-4 h-4" />
+              </a>
+              <p className="text-xs text-muted">No crypto knowledge needed. M-Pesa account required.</p>
             </motion.div>
-          ))}
-        </div>
+          </>
+        )}
+
+        {tab === "developer" && (
+          <div className="space-y-6">
+            {DEV_STEPS.map(({ n, title, description, code }, i) => (
+              <motion.div
+                key={n}
+                initial={{ opacity: 0, y: 16 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5 bg-card border border-border rounded-xl p-4 sm:p-5 hover:border-muted transition-colors"
+              >
+                <div>
+                  <span className="text-3xl font-bold text-border">{n}</span>
+                  <h3 className="text-sm font-semibold text-primary mt-3 mb-2">{title}</h3>
+                  <p className="text-sm text-secondary leading-relaxed">{description}</p>
+                </div>
+                <div className="bg-surface border border-border rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-border flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-border" />
+                    <div className="w-2 h-2 rounded-full bg-border" />
+                    <div className="w-2 h-2 rounded-full bg-border" />
+                  </div>
+                  <pre className="px-4 py-4 text-xs font-mono text-secondary leading-relaxed overflow-x-auto">
+                    <code>{code}</code>
+                  </pre>
+                </div>
+              </motion.div>
+            ))}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : {}}
+              transition={{ duration: 0.4, delay: 0.4 }}
+              className="flex items-center gap-3 pt-2"
+            >
+              <a
+                href="/docs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-border text-primary hover:border-muted transition-all"
+              >
+                Full API reference <ArrowRight className="w-4 h-4" />
+              </a>
+            </motion.div>
+          </div>
+        )}
       </div>
     </section>
   );
