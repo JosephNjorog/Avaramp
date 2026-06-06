@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  phone        String?
-  passwordHash String?
-  kycStatus    KycStatus @default(PENDING)
-  role         UserRole  @default(USER)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  payments     Payment[]
-  consents     ConsentRecord[]
-  merchant     Merchant?
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  walletAddress String?   @unique   // SIWE payer identity (Avalanche address)
+  phone         String?
+  passwordHash  String?
+  kycStatus     KycStatus @default(PENDING)
+  role          UserRole  @default(USER)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  payments      Payment[]
+  consents      ConsentRecord[]
+  merchant      Merchant?
 }
 
 model Merchant {
