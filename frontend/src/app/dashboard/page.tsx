@@ -9,14 +9,40 @@ import {
 } from "recharts";
 import StatsCard from "@/components/dashboard/StatsCard";
 import CreatePaymentModal from "@/components/dashboard/CreatePaymentModal";
+import TutorialModal, { TutorialStep } from "@/components/tutorial/TutorialModal";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { SkeletonTable } from "@/components/ui/Skeleton";
+import { useFirstVisit } from "@/hooks/useFirstVisit";
 import { paymentsApi } from "@/lib/api";
 import { formatDate, truncateAddress } from "@/lib/utils";
 
+const MERCHANT_TUTORIAL: TutorialStep[] = [
+  {
+    icon: "👋",
+    title: "Welcome to your dashboard",
+    description: "This is where you manage all your payments. You can see your payment history, volume, and create new payments.",
+  },
+  {
+    icon: "💳",
+    title: "Create a payment",
+    description: "Tap the \"New payment\" button and enter the amount you want to receive in your local currency (KES, NGN, etc.).",
+  },
+  {
+    icon: "📱",
+    title: "Show the QR to your customer",
+    description: "A QR code appears. Your customer scans it with their phone and pays with crypto from their wallet. You don't touch any crypto.",
+  },
+  {
+    icon: "💰",
+    title: "M-Pesa arrives automatically",
+    description: "Once payment is confirmed, we convert and send the money straight to your M-Pesa number. Nothing more to do.",
+  },
+];
+
 export default function OverviewPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const { show: showTutorial, dismiss: dismissTutorial } = useFirstVisit("merchant-dashboard");
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["payments"],
@@ -148,6 +174,13 @@ export default function OverviewPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={refetch}
+      />
+
+      <TutorialModal
+        open={showTutorial}
+        onDismiss={dismissTutorial}
+        steps={MERCHANT_TUTORIAL}
+        title="Quick start"
       />
     </div>
   );
