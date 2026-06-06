@@ -5,10 +5,23 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach JWT on every request
+// Attach merchant JWT on every request
 api.interceptors.request.use((config) => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("avaramp_token") : null;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Separate axios instance for payer requests (uses payer JWT)
+const payerApi = axios.create({
+  baseURL: "/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+payerApi.interceptors.request.use((config) => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("avaramp_payer_token") : null;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -82,4 +95,16 @@ export const consentApi = {
 export const settlementsApi = {
   settle: (paymentId: string) => api.post("/settlements", { paymentId }),
   get:    (id: string)        => api.get(`/settlements/${id}`),
+};
+
+// ── Payer SIWE auth ───────────────────────────────────────────────────────────
+export const payerAuthApi = {
+  nonce:  (address: string) =>
+    payerApi.get("/auth/payer/nonce", { params: { address } }),
+  verify: (data: { address: string; message: string; signature: string }) =>
+    payerApi.post("/auth/payer/verify", data),
+  me:     () =>
+    payerApi.get("/auth/payer/me"),
+  update: (data: { phone?: string; email?: string }) =>
+    payerApi.patch("/auth/payer/me", data),
 };
