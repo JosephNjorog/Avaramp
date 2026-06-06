@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { paymentsApi } from "@/lib/api";
 import WalletPay from "./WalletPay";
-import { savePaymentToHistory } from "@/app/wallet/history/page";
+import { savePaymentToHistory } from "@/lib/paymentHistory";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
