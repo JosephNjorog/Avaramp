@@ -4,47 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, ScanLine, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { paymentsApi } from "@/lib/api";
-
-interface HistoryEntry {
-  paymentId:   string;
-  savedAt:     number;
-  amountUsdc:  string;
-  fiatAmount:  string;
-  fiatCurrency: string;
-  status:      string;
-  reference?:  string;
-}
-
-const STORAGE_KEY = "avaramp-pay-history";
-
-export function savePaymentToHistory(payment: {
-  id: string;
-  amountUsdc: string;
-  fiatAmount: string;
-  fiatCurrency: string;
-  status: string;
-  reference?: string;
-}) {
-  try {
-    const existing: HistoryEntry[] = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
-    const already = existing.find((e) => e.paymentId === payment.id);
-    if (already) return;
-    const updated = [
-      {
-        paymentId:    payment.id,
-        savedAt:      Date.now(),
-        amountUsdc:   payment.amountUsdc,
-        fiatAmount:   payment.fiatAmount,
-        fiatCurrency: payment.fiatCurrency,
-        status:       payment.status,
-        reference:    payment.reference,
-      },
-      ...existing,
-    ].slice(0, 50); // keep last 50
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  } catch {}
-}
+import { loadPaymentHistory, type PaymentHistoryEntry } from "@/lib/paymentHistory";
 
 function StatusIcon({ status }: { status: string }) {
   if (status === "SETTLED")   return <CheckCircle2 className="w-4 h-4 text-green-DEFAULT" />;
@@ -54,17 +14,12 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default function HistoryPage() {
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [entries, setEntries] = useState<PaymentHistoryEntry[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
-      setEntries(stored);
-    } catch {
-      setEntries([]);
-    }
+    setEntries(loadPaymentHistory());
   }, []);
 
   if (!mounted) {
