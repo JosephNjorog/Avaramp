@@ -86,7 +86,7 @@ export class AuthService {
     return { user: safeUser, token };
   }
 
-  private issueToken(userId: string, email: string, role: string): string {
+  private issueToken(userId: string, email: string | null, role: string): string {
     return jwt.sign({ sub: userId, email, role }, process.env.JWT_SECRET!, { expiresIn: TOKEN_TTL });
   }
 }
