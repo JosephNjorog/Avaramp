@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle, Zap, ScanLine } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 function PaymentFlowMockup() {
@@ -198,6 +198,24 @@ export default function Hero() {
                   Developer API docs
                 </Button>
               </Link>
+            </motion.div>
+
+            {/* Payer CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="flex items-center gap-3 mb-6"
+            >
+              <div className="flex-1 h-px bg-border" />
+              <Link
+                href="/wallet"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border hover:bg-indigo-DEFAULT hover:text-white transition-all whitespace-nowrap"
+              >
+                <ScanLine className="w-4 h-4" />
+                Paying a merchant? Open AvaRamp Pay
+              </Link>
+              <div className="flex-1 h-px bg-border" />
             </motion.div>
 
             {/* Trust signals */}
