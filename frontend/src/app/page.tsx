@@ -1,12 +1,13 @@
-import Navbar         from "@/components/layout/Navbar";
-import Footer         from "@/components/layout/Footer";
-import Hero           from "@/components/landing/Hero";
-import Features       from "@/components/landing/Features";
-import HowItWorks     from "@/components/landing/HowItWorks";
-import Benefits       from "@/components/landing/Benefits";
+import Navbar          from "@/components/layout/Navbar";
+import Footer          from "@/components/layout/Footer";
+import Hero            from "@/components/landing/Hero";
+import Features        from "@/components/landing/Features";
+import HowItWorks      from "@/components/landing/HowItWorks";
+import Benefits        from "@/components/landing/Benefits";
+import Testimonials    from "@/components/landing/Testimonials";
 import CurrencyMarquee from "@/components/landing/CurrencyMarquee";
-import FAQ            from "@/components/landing/FAQ";
-import FinalCTA       from "@/components/landing/FinalCTA";
+import FAQ             from "@/components/landing/FAQ";
+import FinalCTA        from "@/components/landing/FinalCTA";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
         <Features />
         <HowItWorks />
         <Benefits />
+        <Testimonials />
         <FAQ />
         <FinalCTA />
       </main>
