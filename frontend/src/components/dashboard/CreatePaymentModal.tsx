@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, CheckCircle2, ChevronDown } from "lucide-react";
 import QRCode from "react-qr-code";
 import toast from "react-hot-toast";
 import Modal from "@/components/ui/Modal";
@@ -27,8 +27,9 @@ interface Props {
 }
 
 export default function CreatePaymentModal({ open, onClose, onCreated }: Props) {
-  const [result, setResult]           = useState<any>(null);
-  const [copied, setCopied]           = useState<string | null>(null);
+  const [result, setResult]               = useState<any>(null);
+  const [copied, setCopied]               = useState<string | null>(null);
+  const [showTechDetails, setShowTechDetails] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -44,10 +45,10 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
   const onSubmit = async (data: Form) => {
     try {
       const res = await paymentsApi.create({
-        amountFiat:   data.amountFiat,
-        currency:     data.currency,
-        phone:        data.phone,
-        reference:    data.reference,
+        amountFiat: data.amountFiat,
+        currency:   data.currency,
+        phone:      data.phone,
+        reference:  data.reference,
       }, crypto.randomUUID());
       setResult(res.data.data ?? res.data);
       onCreated();
@@ -61,6 +62,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
     reset();
     setResult(null);
     setCopied(null);
+    setShowTechDetails(false);
     onClose();
   };
 
@@ -68,13 +70,25 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
     <Modal
       open={open}
       onClose={handleClose}
-      title={result ? "Deposit address" : "New payment"}
+      title={result ? "Payment ready" : "New payment"}
       description={result
-        ? "Share this address with your customer. Settlement is automatic once confirmed on-chain."
-        : "Generate a USDC deposit address with automatic M-Pesa settlement."}
+        ? "Show the QR code to your customer. Money arrives to your M-Pesa automatically — you don't need to do anything else."
+        : "Enter the amount you want to receive. Your customer pays the equivalent in USDC."}
     >
       {result ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
+
+          {/* You're all set */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-dim border border-green-DEFAULT/20">
+            <CheckCircle2 className="w-5 h-5 text-green-DEFAULT shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-DEFAULT">You're all set</p>
+              <p className="text-xs text-secondary">
+                M-Pesa settles automatically once the customer pays. No action needed from you.
+              </p>
+            </div>
+          </div>
+
           {/* QR code — merchant shows this to customer */}
           <div className="bg-indigo-dim border border-indigo-border rounded-xl p-4 flex flex-col items-center gap-3">
             <p className="text-xs text-muted font-medium self-start">Show this to your customer</p>
@@ -90,7 +104,6 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
             <p className="text-xs text-secondary text-center">
               Customer scans → opens payment page → pays with their wallet
             </p>
-            {/* Copyable link below the QR */}
             <div className="w-full bg-card border border-indigo-border rounded-lg px-3 py-2 flex items-center gap-2">
               <code className="text-xs font-mono text-indigo-DEFAULT flex-1 break-all leading-relaxed">
                 {typeof window !== "undefined" ? window.location.origin : ""}/pay/{result.id}
@@ -112,29 +125,11 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
             </a>
           </div>
 
-          {/* Address */}
-          <div className="bg-surface border border-border rounded-xl p-4">
-            <p className="text-2xs text-muted mb-2 uppercase tracking-wider font-medium">
-              Deposit address (Avalanche C-Chain)
-            </p>
-            <div className="flex items-center gap-2">
-              <code className="text-xs font-mono text-primary flex-1 break-all leading-relaxed">
-                {result.depositAddress}
-              </code>
-              <button
-                onClick={() => handleCopy(result.depositAddress, "address")}
-                className="text-muted hover:text-secondary transition-colors shrink-0"
-              >
-                {copied === "address" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Conversion summary */}
+          {/* What you receive — prominent */}
           <div className="bg-surface border border-border rounded-xl p-4 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">You receive</span>
-              <span className="font-semibold text-green-DEFAULT">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">You receive</span>
+              <span className="text-lg font-bold text-green-DEFAULT">
                 {result.fiatAmount} {result.fiatCurrency ?? result.currency}
               </span>
             </div>
@@ -144,14 +139,52 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
                 {parseFloat(result.amountUsdc).toFixed(4)} USDC
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted">Network</span>
-              <span className="text-secondary">Avalanche C-Chain</span>
-            </div>
           </div>
 
+          {/* Expiry notice */}
           <div className="flex items-center gap-2 text-xs text-secondary bg-amber-500/8 border border-amber-500/15 rounded-lg px-3 py-2.5">
-            Customer must send <strong className="text-primary mx-1">exactly {parseFloat(result.amountUsdc).toFixed(4)} USDC</strong> to avoid rejection. Link expires in 30 minutes.
+            Link expires in 30 minutes. Customer must send
+            <strong className="text-primary mx-1">exactly {parseFloat(result.amountUsdc).toFixed(4)} USDC</strong>
+            to avoid rejection.
+          </div>
+
+          {/* Technical details — collapsible for advanced users */}
+          <div className="border border-border rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowTechDetails((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-xs text-muted hover:text-secondary transition-colors"
+            >
+              <span>Technical details</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showTechDetails ? "rotate-180" : ""}`} />
+            </button>
+            {showTechDetails && (
+              <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+                <div>
+                  <p className="text-2xs text-muted mb-1.5 uppercase tracking-wider font-medium">
+                    Deposit address (Avalanche C-Chain)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono text-primary flex-1 break-all leading-relaxed">
+                      {result.depositAddress}
+                    </code>
+                    <button
+                      onClick={() => handleCopy(result.depositAddress, "address")}
+                      className="text-muted hover:text-secondary transition-colors shrink-0"
+                    >
+                      {copied === "address" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">Network</span>
+                  <span className="text-secondary">Avalanche C-Chain</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted">Token</span>
+                  <span className="text-secondary">USDC (ERC-20)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <Button onClick={handleClose} variant="secondary" className="w-full">Done</Button>
@@ -160,8 +193,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-primary">
-              Amount to receive
-              <span className="ml-1 font-normal text-muted">(in fiat — customer pays equivalent USDC)</span>
+              How much should your customer pay?
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -182,15 +214,18 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
             </div>
             {errors.amountFiat && <p className="text-xs text-red-DEFAULT">{errors.amountFiat.message}</p>}
             <p className="text-xs text-muted">
-              e.g. enter 5000 KES — customer will be shown the exact USDC amount to send
+              Enter the amount in your local currency. We'll show the customer the exact crypto amount to send.
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-primary">
-              Phone <span className="text-muted font-normal">(M-Pesa recipient)</span>
+              Your M-Pesa number <span className="text-muted font-normal">(where your money arrives)</span>
             </label>
             <input {...register("phone")} placeholder="+254 7XX XXX XXX" className="input" />
+            <p className="text-xs text-muted">
+              Money is sent here automatically after the customer pays.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -201,7 +236,7 @@ export default function CreatePaymentModal({ open, onClose, onCreated }: Props) 
           </div>
 
           <Button type="submit" className="w-full" loading={isSubmitting}>
-            Generate deposit address
+            Generate payment QR
           </Button>
         </form>
       )}
