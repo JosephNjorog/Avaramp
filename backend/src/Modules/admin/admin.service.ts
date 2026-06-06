@@ -398,7 +398,7 @@ export class AdminService {
     });
 
     const filtered = search
-      ? all.filter((r) => r.user.email.toLowerCase().includes(search.toLowerCase()))
+      ? all.filter((r) => r.user.email?.toLowerCase().includes(search.toLowerCase()))
       : all;
 
     const total = filtered.length;
