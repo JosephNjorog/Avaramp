@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, ScanLine } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "@/components/ui/Button";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -57,6 +57,13 @@ export default function Navbar() {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
+          <Link
+            href="/wallet"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border hover:bg-indigo-DEFAULT hover:text-white transition-all"
+          >
+            <ScanLine className="w-3.5 h-3.5" />
+            Pay
+          </Link>
           <Link href="/auth/login">
             <Button size="sm" variant="ghost">Sign in</Button>
           </Link>
@@ -100,11 +107,19 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="pt-2 border-t border-border flex flex-col gap-2">
+                <Link
+                  href="/wallet"
+                  onClick={() => setOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-indigo-DEFAULT bg-indigo-dim border border-indigo-border hover:bg-indigo-DEFAULT hover:text-white transition-all"
+                >
+                  <ScanLine className="w-4 h-4" />
+                  AvaRamp Pay — pay a merchant
+                </Link>
                 <Link href="/auth/login" onClick={() => setOpen(false)}>
-                  <Button className="w-full" size="sm" variant="secondary">Sign in</Button>
+                  <Button className="w-full" size="sm" variant="secondary">Merchant sign in</Button>
                 </Link>
                 <Link href="/auth/register" onClick={() => setOpen(false)}>
-                  <Button className="w-full" size="sm">Get started</Button>
+                  <Button className="w-full" size="sm">Merchant get started</Button>
                 </Link>
               </div>
             </div>
