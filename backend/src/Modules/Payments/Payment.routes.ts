@@ -1,6 +1,6 @@
 import { Router }             from "express";
 import { PaymentController }  from "./payment.controller";
-import { authenticate }       from "../../shared/Middleware/Auth";
+import { authenticateMerchant } from "../../shared/Middleware/apiKeyAuth";
 import { idempotency }        from "../../shared/Middleware/indempotency";
 import { validate }           from "../../shared/Middleware/Validate";
 import { paymentLimiter }     from "../../shared/Middleware/rateLimit";
@@ -12,21 +12,21 @@ const controller = new PaymentController();
 // List all payments for the authenticated user (with optional filters)
 router.get(
   "/",
-  authenticate,
+  authenticateMerchant,
   controller.list.bind(controller)
 );
 
 // Analytics summary
 router.get(
   "/analytics",
-  authenticate,
+  authenticateMerchant,
   controller.analytics.bind(controller)
 );
 
 // Create payment
 router.post(
   "/",
-  authenticate,
+  authenticateMerchant,
   paymentLimiter,
   idempotency,
   validate(createPaymentSchema),
