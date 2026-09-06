@@ -5,6 +5,7 @@ import { CheckCircle2, Zap, ArrowRight, MessageSquare } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
+import { GradientHero } from "@/components/ui/GradientHero";
 import { cn } from "@/lib/utils";
 
 const CURRENCIES = [
@@ -79,7 +80,7 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
           {/* Hero */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <GradientHero className="text-center max-w-2xl mx-auto mb-16 pt-4 pb-2 -mt-4">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border rounded-full px-3 py-1 mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-DEFAULT" />
               Simple, transparent pricing
@@ -92,13 +93,13 @@ export default function PricingPage() {
               No monthly fees. No setup costs. No hidden charges.
               A single percentage fee on every successful settlement — nothing else.
             </p>
-          </div>
+          </GradientHero>
 
           {/* Plans */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
             <PlanCard
               name="Starter"
-              fee="1.5%"
+              fee="3%"
               subFee="per settlement"
               description="Perfect for new businesses accepting their first cross-border payments."
               features={[
@@ -116,7 +117,7 @@ export default function PricingPage() {
             <PlanCard
               name="Growth"
               badge="Most popular"
-              fee="1.2%"
+              fee="2.5%"
               subFee="per settlement"
               description="For growing teams with higher volume and multi-currency needs."
               features={[
@@ -138,7 +139,7 @@ export default function PricingPage() {
               description="For platforms and marketplaces that need volume pricing and SLAs."
               features={[
                 "Unlimited payments",
-                "Custom fee negotiated (as low as 0.8%)",
+                "Custom fee negotiated (as low as 2%)",
                 "Dedicated settlement account",
                 "White-label API",
                 "On-chain contract customisation",
@@ -153,8 +154,9 @@ export default function PricingPage() {
           <div className="bg-card border border-border rounded-2xl p-8 mb-16">
             <h2 className="text-xl font-semibold mb-2">How the fee works</h2>
             <p className="text-secondary text-sm mb-6 max-w-xl">
-              The fee is deducted from the USDC amount before it is converted and settled to
-              mobile money. The customer always knows exactly what they are sending.
+              The customer always sends the exact USDC amount you invoiced for — the fee is
+              deducted on our side when we settle to your mobile money account, so you never
+              have to build fee math into your pricing.
             </p>
 
             <div className="bg-surface border border-border rounded-xl p-5 font-mono text-sm max-w-lg">
@@ -163,13 +165,13 @@ export default function PricingPage() {
                 <span className="text-primary">19.23 USDC</span>
               </div>
               <div className="flex justify-between mb-2 text-red-DEFAULT">
-                <span>AvaRamp fee (1.5%)</span>
-                <span>− 0.29 USDC</span>
+                <span>AvaRamp fee (3%)</span>
+                <span>− 0.58 USDC</span>
               </div>
               <div className="border-t border-border my-2" />
               <div className="flex justify-between font-semibold">
                 <span className="text-secondary">Merchant receives</span>
-                <span className="text-green-DEFAULT">2,462.50 KES</span>
+                <span className="text-green-DEFAULT">2,425.00 KES</span>
               </div>
               <p className="text-xs text-muted mt-3">
                 FX rate locked at payment creation. Settlement completes in under 3 minutes.
@@ -218,7 +220,7 @@ export default function PricingPage() {
                 },
                 {
                   q: "What is the FX rate used for conversion?",
-                  a: "We use the mid-market rate from Frankfurter (ECB data) locked at payment creation time. The rate the customer sees is the rate used — no FX spread markup.",
+                  a: "We use the live rate from our settlement network, locked at payment creation time. The rate you see is the rate used — no FX spread markup on top.",
                 },
                 {
                   q: "How fast does money reach the recipient?",
