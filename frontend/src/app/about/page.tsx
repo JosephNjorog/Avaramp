@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Zap, Globe, Shield, Cpu, Users } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 export const metadata = { title: "About — AvaRamp" };
 
@@ -46,7 +47,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
           {/* Hero */}
-          <div className="text-center max-w-2xl mx-auto mb-20">
+          <GradientHero className="text-center max-w-2xl mx-auto mb-20 pt-4 pb-2 -mt-4">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border rounded-full px-3 py-1 mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-DEFAULT" />
               Our mission
@@ -59,7 +60,7 @@ export default function AboutPage() {
               A corridor that should take seconds but takes days.
               AvaRamp fixes that — one payment at a time.
             </p>
-          </div>
+          </GradientHero>
 
           {/* What we do */}
           <div className="bg-card border border-border rounded-2xl p-8 sm:p-10 mb-16">
@@ -83,7 +84,7 @@ export default function AboutPage() {
               {[
                 { value: "< 3 min", label: "End-to-end settlement" },
                 { value: "5",       label: "African currencies" },
-                { value: "1.5%",    label: "Flat platform fee" },
+                { value: "3%",      label: "Flat platform fee" },
               ].map(({ value, label }) => (
                 <div key={label} className="bg-surface border border-border rounded-xl p-4 text-center">
                   <div className="text-2xl font-bold text-primary mb-1">{value}</div>
