@@ -1,7 +1,7 @@
 import { prisma } from "../../shared/database/prisma";
 
 export class ApiKeyRepository {
-  async create(data: { merchantId: string; name: string; prefix: string; hashedKey: string }) {
+  async create(data: { merchantId: string; name: string; prefix: string; hashedKey: string; isTest: boolean }) {
     return prisma.apiKey.create({ data });
   }
 
