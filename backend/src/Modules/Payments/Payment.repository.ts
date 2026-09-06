@@ -39,6 +39,7 @@ export class PaymentRepository {
           id: true, merchantId: true, userId: true, amountUsdc: true,
           amountFiat: true, fiatCurrency: true, depositAddress: true,
           status: true, fxRate: true, fiatAmount: true, settlementReference: true,
+          feeBps: true, feeAmount: true, isTest: true,
           phone: true, reference: true,
           expiresAt: true, confirmedAt: true, settledAt: true,
           createdAt: true, updatedAt: true, idempotencyKey: true,
@@ -53,6 +54,18 @@ export class PaymentRepository {
       }),
     ]);
     return { payments, total, limit, offset };
+  }
+
+  async findSettledForStatement(merchantId: string) {
+    return prisma.payment.findMany({
+      where: { merchantId, status: "SETTLED" },
+      orderBy: { settledAt: "desc" },
+      select: {
+        id: true, reference: true, amountUsdc: true, amountFiat: true,
+        fiatCurrency: true, feeBps: true, feeAmount: true,
+        settlementReference: true, settledAt: true,
+      },
+    });
   }
 
   async getAnalyticsSummary(merchantId?: string) {
