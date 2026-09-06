@@ -694,11 +694,22 @@ const payment = await res.json();` },
   "amountUsdc": "19.23",
   "fiatAmount": "2500.00",
   "fiatCurrency": "KES",
+  "feeBps": 300,
+  "feeAmount": "75.00",
   "phone": "+254712345678",
   "reference": "Order #1234",
   "createdAt": "2024-01-15T10:40:00Z",
   "updatedAt": "2024-01-15T10:55:00Z"
 }`} />
+            <P>
+              <code className="text-xs font-mono text-secondary">feeBps</code> and{" "}
+              <code className="text-xs font-mono text-secondary">feeAmount</code> only populate once
+              a payment settles — they show the platform fee actually deducted from{" "}
+              <code className="text-xs font-mono text-secondary">fiatAmount</code> before payout,
+              in the merchant's fiat currency. See{" "}
+              <a href="/pricing" className="text-indigo-DEFAULT hover:underline">pricing</a> for
+              current rates; failed payments are never charged.
+            </P>
           </Section>
 
           {/* GET /payments */}
@@ -1227,7 +1238,7 @@ await gateway.deposit(paymentId, merchantWalletAddress, amount);`}
           <Section id="contracts-treasury">
             <H2>Protocol fees & treasury</H2>
             <P>
-              AvaRamp charges a protocol fee on every deposit (default 1.5%). The fee accumulates
+              AvaRamp charges a protocol fee on every deposit (default 3%). The fee accumulates
               in the <code className="text-xs font-mono text-secondary">accruedFees</code> state variable
               and can be withdrawn to the treasury address by calling{" "}
               <code className="text-xs font-mono text-secondary">withdrawTreasury()</code>.
