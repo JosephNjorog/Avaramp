@@ -46,7 +46,6 @@ export class AuthService {
             name:           merchantName,
             email:          dto.email,
             walletAddress:  `0x${crypto.randomBytes(20).toString("hex")}`,
-            mpesaTill:      dto.phone ?? "",
             payoutAccount:  dto.phone ?? "",
             payoutType:     "phone",
             payoutCurrency: "KES",
