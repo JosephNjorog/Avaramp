@@ -6,7 +6,6 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { prisma } from "../../shared/database/prisma";
-import { ledger } from "../../shared/database/ledger";
 import { webhookQueue } from "../../shared/queue/queues";
 import { logger } from "../../shared/Utils/Logger";
 
@@ -67,20 +66,23 @@ router.post("/webhook", async (req: Request, res: Response) => {
         data: { status: "SETTLED", settledAt: new Date(), settlementReference: providerRef },
       });
 
-      await ledger.record({
-        paymentId: payment.id,
-        type: "SETTLEMENT_COMPLETED",
-        debitAcct: "escrow",
-        creditAcct: `merchant:${payment.merchantId}`,
-        amount: payment.amountFiat as string,
-        currency: payment.fiatCurrency,
-        metadata: { providerRef },
-      });
+      // Net amount already credited to the merchant at settlement-initiation
+      // (settlement.service.ts records SETTLEMENT_INITIATED + PROTOCOL_FEE there);
+      // this just confirms the transfer cleared, so no further ledger entry here.
 
       await webhookQueue.add("deliver", {
         paymentId: payment.id,
         event: "payment.settled",
-        payload: { paymentId: payment.id, reference: providerRef, amount: payment.amountFiat, currency: payment.fiatCurrency },
+        payload: {
+          paymentId: payment.id,
+          reference: providerRef,
+          amount: payment.feeAmount
+            ? (parseFloat(payment.amountFiat as string) - parseFloat(payment.feeAmount)).toFixed(2)
+            : payment.amountFiat,
+          feeBps: payment.feeBps,
+          feeAmount: payment.feeAmount,
+          currency: payment.fiatCurrency,
+        },
       });
     } else {
       await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
