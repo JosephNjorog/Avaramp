@@ -38,7 +38,7 @@ export class PaymentRepository {
         select: {
           id: true, merchantId: true, userId: true, amountUsdc: true,
           amountFiat: true, fiatCurrency: true, depositAddress: true,
-          status: true, fxRate: true, fiatAmount: true, mpesaReceiptId: true,
+          status: true, fxRate: true, fiatAmount: true, settlementReference: true,
           phone: true, reference: true,
           expiresAt: true, confirmedAt: true, settledAt: true,
           createdAt: true, updatedAt: true, idempotencyKey: true,
