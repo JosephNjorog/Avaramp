@@ -27,9 +27,9 @@ export class MerchantController {
     try {
       const userId = (req as any).user?.sub as string;
       const merchant = await service.getMerchantByUserId(userId);
-      const { payoutType, payoutAccount, payoutAccountRef, payoutCurrency } = req.body;
+      const { payoutType, payoutAccount, payoutAccountRef, payoutCurrency, mobileNetwork } = req.body;
       const result = await service.updatePayoutSettings(merchant.id, {
-        payoutType, payoutAccount, payoutAccountRef, payoutCurrency,
+        payoutType, payoutAccount, payoutAccountRef, payoutCurrency, mobileNetwork,
       });
       res.status(200).json({ success: true, data: result });
     } catch (err) { next(err); }
