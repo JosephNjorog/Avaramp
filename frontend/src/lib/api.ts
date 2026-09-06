@@ -66,7 +66,15 @@ export const merchantsApi = {
     payoutAccount?: string;
     payoutAccountRef?: string;
     payoutCurrency?: string;
+    mobileNetwork?: string;
   }) => api.patch("/merchants/payout", data),
+};
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+export const apiKeysApi = {
+  list:   ()               => api.get("/api-keys"),
+  create: (name: string)   => api.post("/api-keys", { name }),
+  revoke: (id: string)     => api.delete(`/api-keys/${id}`),
 };
 
 // ── Payments ──────────────────────────────────────────────────────────────────
