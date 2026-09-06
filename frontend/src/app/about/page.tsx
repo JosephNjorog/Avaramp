@@ -31,8 +31,8 @@ const VALUES = [
 const TIMELINE = [
   { date: "Jan 2026", title: "Founded", body: "AvaRamp founded with the goal of building the missing crypto-to-mobile-money bridge for Africa." },
   { date: "Feb 2026", title: "First integration", body: "Avalanche Glacier API integrated. On-chain USDC deposit detection live on Fuji testnet." },
-  { date: "Mar 2026", title: "Paystack settlement", body: "Automated KES, NGN, GHS, TZS, UGX settlement via Paystack Transfers goes live." },
-  { date: "Apr 2026", title: "Daraja added",       body: "Safaricom Daraja API integration added — full M-Pesa support for Till and Paybill numbers." },
+  { date: "Mar 2026", title: "Settlement network live", body: "Automated KES, NGN, GHS, TZS, UGX settlement to mobile money and bank accounts goes live." },
+  { date: "Apr 2026", title: "Full M-Pesa support",     body: "Till and Paybill payout support added alongside personal M-Pesa numbers." },
   { date: "May 2026", title: "Public beta",        body: "Merchant onboarding opens. First real USDC → KES settlement processed on mainnet." },
   { date: "Now",      title: "Growing",            body: "Expanding currency and rail coverage across East and West Africa. Reach out to join the journey." },
 ];
@@ -136,8 +136,7 @@ export default function AboutPage() {
               {[
                 ["Chain",         "Avalanche C-Chain (EVM, USDC native, sub-second finality)"],
                 ["On-chain detection", "Glacier API + BullMQ deposit watcher"],
-                ["Settlement (KES)", "Safaricom Daraja B2C and B2B APIs"],
-                ["Settlement (NGN/GHS/TZS/UGX)", "Paystack Transfer API"],
+                ["Settlement", "AvaRamp's own mobile money & bank payout network"],
                 ["Backend",       "Node.js, Express, TypeScript, Prisma, Neon PostgreSQL"],
                 ["Queue",         "BullMQ on Redis (Render Key-Value)"],
                 ["Frontend",      "Next.js 14, Tailwind CSS, Framer Motion"],
