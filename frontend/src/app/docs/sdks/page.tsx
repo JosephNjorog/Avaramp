@@ -61,14 +61,18 @@ export default function SdksPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-primary">@avaramp/sdk</p>
-                  <p className="text-xs text-muted">JavaScript / TypeScript — Node.js and browser</p>
+                  <p className="text-xs text-muted">JavaScript / TypeScript — Node.js</p>
                 </div>
-                <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-green-dim text-green-DEFAULT border border-green-DEFAULT/20 font-medium">
-                  Available
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-amber-dim text-amber-DEFAULT border border-amber-DEFAULT/20 font-medium">
+                  Source available — npm publish coming soon
                 </span>
               </div>
 
-              <Block code="npm install @avaramp/sdk" />
+              <p className="text-xs text-secondary mb-3">
+                The source lives in the main repo. Until it's published to npm, install it
+                directly from GitHub:
+              </p>
+              <Block code="npm install github:avaramp/avaramp#path:sdk" />
 
               <h3 className="text-sm font-semibold text-primary mb-2">Quick example</h3>
               <Block lang="typescript" code={`import { AvaRamp } from "@avaramp/sdk";
@@ -116,6 +120,27 @@ client.payments.onSettled(payment.id, (data) => {
                   <span className="ml-auto text-xs text-muted">{note}</span>
                 </div>
               ))}
+            </div>
+          </section>
+
+          {/* Spec downloads */}
+          <section>
+            <h2 className="text-xl font-semibold mb-4">API spec &amp; Postman collection</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <a
+                href="https://avarampbackend.onrender.com/openapi.yaml"
+                className="bg-card border border-border rounded-xl p-5 hover:border-muted transition-colors"
+              >
+                <p className="text-sm font-semibold text-primary mb-1">OpenAPI 3.0 spec</p>
+                <p className="text-xs text-muted">Import into Insomnia, Swagger UI, or generate a client for any language.</p>
+              </a>
+              <a
+                href="https://avarampbackend.onrender.com/postman_collection.json"
+                className="bg-card border border-border rounded-xl p-5 hover:border-muted transition-colors"
+              >
+                <p className="text-sm font-semibold text-primary mb-1">Postman collection</p>
+                <p className="text-xs text-muted">Every endpoint pre-configured with example requests — import and go.</p>
+              </a>
             </div>
           </section>
 
