@@ -2,7 +2,7 @@
 
 > **Your Launchpad for payment integrations in a snapshot**
 
-AvaRamp is a **crypto-to-fiat payment gateway** built on the **Avalanche C-Chain**. It enables merchants to accept **USDC stablecoin payments** from users and receive settlements directly in local fiat currency — starting with **M-Pesa** for East and West African markets (KES, NGN, GHS, TZS, UGX).
+AvaRamp is a **crypto-to-fiat payment gateway** built on the **Avalanche C-Chain**. It enables merchants to accept **USDC stablecoin payments** from users and receive settlements directly in local fiat currency via mobile money, across East and West African markets (KES, NGN, GHS, TZS, UGX).
 
 ---
 
@@ -30,7 +30,7 @@ AvaRamp bridges the gap between decentralized finance and everyday commerce in e
 1. A merchant registers and gets a wallet address.
 2. A customer initiates a payment — AvaRamp generates a unique USDC deposit address for that transaction.
 3. The customer sends USDC to that address on Avalanche.
-4. AvaRamp detects the on-chain deposit, converts to fiat at the live FX rate, and settles to the merchant's M-Pesa till number.
+4. AvaRamp detects the on-chain deposit, converts to fiat at the live FX rate, and settles to the merchant's mobile money account.
 5. The merchant receives a webhook notification and the ledger is updated with full double-entry accounting records.
 
 **Supported fiat settlement currencies:**
@@ -48,7 +48,7 @@ AvaRamp bridges the gap between decentralized finance and everyday commerce in e
 ## How It Works
 
 ```text
-User                     AvaRamp Backend                  Avalanche C-Chain         M-Pesa
+User                     AvaRamp Backend                  Avalanche C-Chain      Settlement Network
  │                              │                                  │                   │
  │  POST /payments              │                                  │                   │
  │─────────────────────────────>│                                  │                   │
@@ -68,7 +68,7 @@ User                     AvaRamp Backend                  Avalanche C-Chain     
  │                              │                                  │                   │
  │                              │  SettlementWorker runs           │                   │
  │                              │─────────────────────────────────────────────────>   │
- │                              │                                  │  M-Pesa STK Push  │
+ │                              │                                  │  Mobile money payout │
  │                              │  Record ledger entries           │                   │
  │                              │  Fire merchant webhook           │                   │
 ```
@@ -113,10 +113,11 @@ backend/src/
 │   │   └── glacier.service.ts     # Avalanche Glacier API — ERC-20 transfer queries
 │   ├── merchants/                 # Merchant registration & management
 │   ├── Payments/                  # Payment creation & status tracking
-│   ├── Settlements/               # Fiat settlement (M-Pesa)
+│   ├── Settlements/               # Fiat settlement (mobile money payouts)
+│   ├── ApiKeys/                   # Merchant-scoped API key issuance & revocation
 │   ├── users/                     # User accounts & KYC
-│   ├── Fx/                        # FX conversion rates (scaffolded)
-│   └── Webhooks/                  # Outbound webhook delivery (scaffolded)
+│   ├── Fx/                        # FX conversion rates
+│   └── Webhooks/                  # Outbound webhook delivery
 │
 └── shared/
     ├── database/
@@ -135,7 +136,7 @@ backend/src/
         ├── queues.ts              # BullMQ queue definitions
         └── workers/
             ├── payment.worker.ts  # Polls for on-chain USDC deposits
-            ├── settlement.worker.ts # Triggers M-Pesa settlement
+            ├── settlement.worker.ts # Triggers mobile money settlement
             └── Webhook.worker.ts  # Delivers webhooks to merchant URLs
 ```
 
@@ -184,7 +185,8 @@ id              UUID (PK)
 name            String
 email           String (unique)
 walletAddress   String (unique)       ← Avalanche wallet address
-mpesaTillNumber String?               ← M-Pesa till for settlement
+payoutAccount   String                ← Phone, till, or paybill number for settlement
+mobileNetwork   String?               ← Carrier for phone payouts (e.g. Safaricom, MTN)
 webhookUrl      String?               ← Notified on payment events
 webhookSecret   String?               ← HMAC signing secret
 feeOverrideBps  Int?                  ← Custom fee in basis points
@@ -211,7 +213,7 @@ confirmedTxHash   String?
 confirmedAt       DateTime?
 onChainAmount     Decimal?
 fxRate            Decimal?
-mpesaReceiptId    String?
+settlementReference String?
 settledAt         DateTime?
 metadata          Json?
 ```
@@ -236,7 +238,8 @@ chainId     Int (default: 43114)
 id        UUID (PK)
 paymentId UUID (FK → Payment)
 type      LedgerEntryType           ← USDC_RECEIVED | FX_CONVERSION | PROTOCOL_FEE
-                                       MPESA_SETTLED | REFUND_ISSUED | MERCHANT_WITHDRAWAL
+                                       SETTLEMENT_INITIATED | SETTLEMENT_COMPLETED
+                                       REFUND_ISSUED | MERCHANT_WITHDRAWAL
 side      LedgerSide                ← DEBIT | CREDIT
 account   String                    ← "merchant:{uuid}" | "treasury" | "escrow"
 amount    String
@@ -338,7 +341,7 @@ Deployed on **Avalanche C-Chain** (chainId: 43114).
 | Function                              | Role           | Description                                      |
 | ------------------------------------- | -------------- | ------------------------------------------------ |
 | `deposit(paymentId, merchant, amount)`| User           | Deposit USDC to pay a merchant                   |
-| `markSettled(paymentId)`              | OPERATOR_ROLE  | Mark payment settled after M-Pesa confirmation   |
+| `markSettled(paymentId)`              | OPERATOR_ROLE  | Mark payment settled after settlement confirmation |
 | `refund(paymentId)`                   | OPERATOR_ROLE  | Refund USDC to original payer                    |
 | `registerMerchant(merchant)`          | OPERATOR_ROLE  | Whitelist a new merchant                         |
 | `merchantWithdraw(amount)`            | MERCHANT_ROLE  | Merchant withdraws USDC balance                  |
@@ -372,7 +375,7 @@ AvaRamp uses **BullMQ** backed by Redis for all asynchronous work.
 | Queue             | Purpose                        |
 | ----------------- | ------------------------------ |
 | `paymentQueue`    | Monitor on-chain deposits      |
-| `settlementQueue` | Process M-Pesa settlements     |
+| `settlementQueue` | Process mobile money settlements |
 | `webhookQueue`    | Deliver merchant webhook events|
 
 ### Workers
@@ -387,7 +390,7 @@ AvaRamp uses **BullMQ** backed by Redis for all asynchronous work.
 **SettlementWorker** (concurrency: 5, rate: 10/sec)
 
 - Job: `settle-payment`
-- Calls the settlement service to execute M-Pesa STK push
+- Calls the settlement service to execute the mobile money payout
 - Records ledger entries on completion
 
 **WebhookWorker** (concurrency: 10, rate: 50/sec)
@@ -439,9 +442,11 @@ HD_MNEMONIC=your_12_or_24_word_mnemonic
 # Contracts
 PAYMENT_GATEWAY_ADDRESS=0x...deployed_contract_address
 
-# M-Pesa
-MPESA_CONSUMER_KEY=your_mpesa_consumer_key
-MPESA_CONSUMER_SECRET=your_mpesa_consumer_secret
+# Settlement network (fiat payout + FX rates)
+PRETIUM_API_KEY=your_settlement_provider_api_key
+PRETIUM_BASE_URL=https://your-settlement-provider.example
+PRETIUM_SETTLEMENT_ADDRESS=0x...settlement_receiving_address
+PUBLIC_BASE_URL=https://your-backend.example
 
 # Security
 ENCRYPTION_KEY=64_char_hex_string_for_aes256gcm
