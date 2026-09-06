@@ -4,8 +4,9 @@ import { CreatePaymentDto, PaymentResponse } from "./Payment.types";
 import { walletService } from "../blockchain/wallet.service";
 import { fxService } from "../Fx/fx.service";
 import { paymentQueue } from "../../shared/queue/queues";
-import { NotFoundError, ValidationError } from "../../shared/Utils/Errors";
+import { NotFoundError, ValidationError, KycRequiredError } from "../../shared/Utils/Errors";
 import { prisma } from "../../shared/database/prisma";
+import { KYC_THRESHOLD_USDC } from "../../shared/constants";
 
 const repo = new PaymentRepository();
 
@@ -15,7 +16,10 @@ const EXPIRY_MINUTES = 30;
 export class PaymentService {
   async createPayment(dto: CreatePaymentDto): Promise<PaymentResponse> {
     // Verify merchant exists and is active
-    const merchant = await prisma.merchant.findUnique({ where: { id: dto.merchantId } });
+    const merchant = await prisma.merchant.findUnique({
+      where: { id: dto.merchantId },
+      include: { user: true },
+    });
     if (!merchant || !merchant.isActive) {
       throw new ValidationError("Merchant not found or inactive");
     }
@@ -40,11 +44,19 @@ export class PaymentService {
       rate       = converted.rate;
     }
 
+    // Large payments require the merchant's account to be KYC-verified
+    if (parseFloat(amountUsdc) >= KYC_THRESHOLD_USDC && merchant.user?.kycStatus !== "VERIFIED") {
+      throw new KycRequiredError(
+        `Payments of ${KYC_THRESHOLD_USDC} USDC or more require a verified account. Verify your account in Settings to continue.`
+      );
+    }
+
     // Generate a fresh deposit wallet for this payment
     const { address: depositAddress, encryptedPk: depositPk } =
       walletService.generateDepositWallet();
 
     const expiresAt = new Date(Date.now() + EXPIRY_MINUTES * 60 * 1000);
+    const isTest = dto.isTest ?? false;
 
     const payment = await repo.create({
       id:             uuidv4(),
@@ -62,9 +74,12 @@ export class PaymentService {
       expiresAt,
       idempotencyKey: dto.idempotencyKey,
       metadata:       dto.metadata,
+      isTest,
     });
 
     // Enqueue the deposit watcher (retries every 30s for up to EXPIRY_MINUTES)
+    // Test-mode payments still flow through the same worker — it short-circuits
+    // the real chain lookup for them (see payment.worker.ts).
     await paymentQueue.add(
       "watch-deposit",
       { paymentId: payment.id },
@@ -88,7 +103,30 @@ export class PaymentService {
       expiresAt:      payment.expiresAt,
       network:        "avalanche",
       token:          "USDC",
+      isTest:         payment.isTest,
     };
+  }
+
+  async getStatementCsv(merchantId: string): Promise<string> {
+    const payments = await repo.findSettledForStatement(merchantId);
+    const header = "id,reference,amountUsdc,amountFiat,fiatCurrency,feeBps,feeAmount,settlementReference,settledAt\n";
+    const rows = payments
+      .map((p) => {
+        const cells = [
+          p.id,
+          p.reference ?? "",
+          p.amountUsdc,
+          p.amountFiat,
+          p.fiatCurrency,
+          p.feeBps ?? "",
+          p.feeAmount ?? "",
+          p.settlementReference ?? "",
+          p.settledAt?.toISOString() ?? "",
+        ];
+        return cells.map((c) => `"${c}"`).join(",");
+      })
+      .join("\n");
+    return header + rows;
   }
 
   async getPayment(id: string) {
