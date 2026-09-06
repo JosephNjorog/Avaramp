@@ -24,7 +24,7 @@ type Payment = {
   settledAt: string | null;
   confirmedAt: string | null;
   createdAt: string;
-  mpesaReceiptId: string | null;
+  settlementReference: string | null;
   fxRate: number | null;
 };
 
@@ -202,7 +202,7 @@ export default function PaymentsPage() {
                 { label: "Phone", value: selected.phone ?? "—" },
                 { label: "Reference", value: selected.reference ?? "—" },
                 { label: "FX Rate", value: selected.fxRate ? `${selected.fxRate}` : "—" },
-                { label: "M-Pesa Receipt", value: selected.mpesaReceiptId ?? "—" },
+                { label: "Settlement Reference", value: selected.settlementReference ?? "—" },
                 { label: "Deposit Address", value: truncate(selected.depositAddress, 20), mono: true },
                 { label: "Tx Hash", value: truncate(selected.confirmedTxHash ?? "", 20), mono: true },
                 { label: "Created", value: formatDateTime(selected.createdAt) },
