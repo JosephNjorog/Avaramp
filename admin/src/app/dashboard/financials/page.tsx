@@ -48,12 +48,12 @@ export default function FinancialsPage() {
   // Month-to-date fee (last 30 days from revenueByDay)
   const feeThisMonth = revenueByDay
     .slice(-30)
-    .reduce((s: number, d: { estimatedFee: number }) => s + d.estimatedFee, 0);
+    .reduce((s: number, d: { fee: number }) => s + d.fee, 0);
 
   const totalPayments = stats?.totalPayments ?? 0;
   const settledPayments = stats?.paymentsByStatus?.SETTLED ?? 0;
   const avgFeePerTx =
-    settledPayments > 0 ? (fin?.estimatedFeeRevenue ?? 0) / settledPayments : 0;
+    settledPayments > 0 ? (fin?.feeRevenue ?? 0) / settledPayments : 0;
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -68,8 +68,8 @@ export default function FinancialsPage() {
         />
         <StatsCard
           label="Total Fee Revenue"
-          value={`$${(fin?.estimatedFeeRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subLabel="Estimated at 1% of settled USDC"
+          value={`$${(fin?.feeRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          subLabel="Actual platform fee on settled payments"
           icon={<TrendingUp className="w-4 h-4" />}
           loading={isLoading}
           accent="indigo"
@@ -141,8 +141,8 @@ export default function FinancialsPage() {
               />
               <Area
                 type="monotone"
-                dataKey="estimatedFee"
-                name="Est. Fee ($)"
+                dataKey="fee"
+                name="Fee ($)"
                 stroke="#3dd68c"
                 fill="url(#feeGrad2)"
                 strokeWidth={2}
