@@ -205,9 +205,10 @@ export default function GuidePage() {
 
           <StepLast n={4} title="Generate an API key (programmatic integration)">
             <p>
-              For server-side integrations, use the{" "}
-              <Mono>POST /auth/login</Mono> response token as a bearer token. Future versions will
-              support dedicated API key management.
+              For server-side integrations, go to <Mono>Dashboard → Settings → API Keys</Mono> and
+              click Generate. Copy the key immediately — it's only shown once. Send it as an{" "}
+              <Mono>x-api-key</Mono> header on requests to <Mono>/payments</Mono> instead of a
+              login bearer token.
             </p>
           </StepLast>
         </section>
@@ -339,7 +340,7 @@ export default function GuidePage() {
               The converted fiat is pushed to the merchant's registered mobile money number:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
-              <li><strong className="text-primary">Kenya (KES)</strong> — M-Pesa (Safaricom B2C API)</li>
+              <li><strong className="text-primary">Kenya (KES)</strong> — M-Pesa</li>
               <li><strong className="text-primary">Nigeria (NGN)</strong> — MTN Mobile Money</li>
               <li><strong className="text-primary">Ghana (GHS)</strong> — MTN MoMo / Airtel Money</li>
               <li><strong className="text-primary">Tanzania (TZS)</strong> — M-Pesa TZ / Airtel</li>
