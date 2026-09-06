@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChevronRight, FileText, Shield, Cookie } from "lucide-react";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 interface Section {
   id:    string;
@@ -30,7 +31,7 @@ export default function LegalPage({ title, subtitle, lastUpdated, sections, chil
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <GradientHero className="border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-10 md:py-14">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-xs text-muted mb-4">
@@ -42,7 +43,7 @@ export default function LegalPage({ title, subtitle, lastUpdated, sections, chil
           <p className="text-secondary mb-3">{subtitle}</p>
           <p className="text-xs text-muted">Last updated: {lastUpdated}</p>
         </div>
-      </div>
+      </GradientHero>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
         <div className="flex gap-10">
