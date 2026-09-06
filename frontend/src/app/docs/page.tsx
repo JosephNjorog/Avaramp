@@ -331,10 +331,10 @@ export default function DocsPage() {
               <div className="flex gap-4">
                 <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-DEFAULT flex items-center justify-center text-white text-xs font-bold">5</div>
                 <div className="flex-1">
-                  <H3>M-Pesa payout fires automatically</H3>
+                  <H3>Mobile money payout fires automatically</H3>
                   <P>
                     AvaRamp's settlement engine converts USDC to the fiat amount at the locked exchange rate
-                    and issues a Daraja B2C payout to the customer's phone number. You receive a webhook
+                    and pays out directly to the merchant's mobile money account. You receive a webhook
                     when the status changes to <code className="text-xs font-mono text-green-400">SETTLED</code>.
                   </P>
                 </div>
