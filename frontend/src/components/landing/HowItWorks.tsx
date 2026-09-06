@@ -61,7 +61,7 @@ const DEV_STEPS = [
     n: "03",
     title: "Auto-settle via M-Pesa",
     description:
-      "We convert at the locked rate and initiate an M-Pesa B2C transfer via Daraja. The full amount lands in the recipient's mobile wallet. We fire payment.settled when complete.",
+      "We convert at the locked rate and initiate a mobile money payout through our settlement network. The full amount lands in the recipient's mobile wallet. We fire payment.settled when complete.",
     code: `// Final webhook
 {
   "event": "payment.settled",
