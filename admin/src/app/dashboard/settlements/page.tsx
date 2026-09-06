@@ -14,7 +14,7 @@ type Settlement = {
   amountUsdc: string;
   amountFiat: string;
   fiatCurrency: string;
-  mpesaReceiptId: string | null;
+  settlementReference: string | null;
   settledAt: string | null;
   fxRate: number | null;
 };
@@ -36,7 +36,7 @@ export default function SettlementsPage() {
       s.id.includes(q) ||
       s.merchant?.name?.toLowerCase().includes(q) ||
       (s.phone ?? "").includes(q) ||
-      (s.mpesaReceiptId ?? "").toLowerCase().includes(q)
+      (s.settlementReference ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -55,7 +55,7 @@ export default function SettlementsPage() {
       amountUsdc: s.amountUsdc,
       amountFiat: s.amountFiat,
       fiatCurrency: s.fiatCurrency,
-      mpesaReceiptId: s.mpesaReceiptId ?? "",
+      settlementReference: s.settlementReference ?? "",
       settledAt: s.settledAt ?? "",
       fxRate: s.fxRate ?? "",
     }));
@@ -164,7 +164,7 @@ export default function SettlementsPage() {
                     <td className="px-4 py-3 text-secondary tabular-nums">{s.amountFiat}</td>
                     <td className="px-4 py-3 text-secondary">{s.fiatCurrency}</td>
                     <td className="px-4 py-3 text-secondary font-mono text-xs">
-                      {s.mpesaReceiptId ?? "—"}
+                      {s.settlementReference ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-muted text-xs">
                       {formatDateTime(s.settledAt)}
