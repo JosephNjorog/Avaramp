@@ -131,9 +131,9 @@ export default function DashboardPage() {
           accent="blue"
         />
         <StatsCard
-          label="Estimated Fee Revenue"
-          value={`$${(stats?.estimatedFeeRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subLabel="1.5% platform fee on settled USDC"
+          label="Fee Revenue"
+          value={`$${(stats?.feeRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          subLabel="Platform fee on settled payments (3% default, per-merchant override)"
           icon={<TrendingUp className="w-4 h-4" />}
           loading={loading}
           accent="indigo"
@@ -200,8 +200,8 @@ export default function DashboardPage() {
                 />
                 <Area
                   type="monotone"
-                  dataKey="estimatedFee"
-                  name="Est. Fee"
+                  dataKey="fee"
+                  name="Fee"
                   stroke="#3dd68c"
                   fill="url(#feeGrad)"
                   strokeWidth={2}
