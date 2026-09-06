@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logger } from "../../shared/Utils/Logger";
+import { pretiumService } from "../Settlements/pretium.service";
 
 // Primary: open.er-api.com — free, no key, supports 160+ currencies including all African ones
 // Fallback: hard-coded approximate rates used only when the API is unreachable
@@ -40,6 +41,12 @@ export class FxService {
     const cached = cache[toCurrency];
     if (cached && now - cached.fetchedAt < CACHE_TTL_MS) {
       return cached.rate;
+    }
+
+    const providerRate = await pretiumService.getRate(toCurrency);
+    if (providerRate) {
+      cache[toCurrency] = { rate: providerRate, fetchedAt: now };
+      return providerRate;
     }
 
     try {
