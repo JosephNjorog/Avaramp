@@ -7,8 +7,7 @@ export interface CreateMerchantDto {
   payoutAccount?:   string;   // phone, till number, or paybill number
   payoutAccountRef?: string;  // paybill only — account reference
   payoutCurrency?:  string;   // KES | NGN | GHS | TZS | UGX
-  // Legacy / convenience aliases
-  mpesaTill?:       string;
+  mobileNetwork?:   string;   // carrier for "phone" payouts, e.g. "Safaricom", "MTN"
   webhookUrl?:      string;
   phone?:           string;
 }
