@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: AvaRamp API
+  version: "1.0.0"
+  description: >
+    Accept USDC on Avalanche C-Chain and settle to mobile money across
+    KES, NGN, GHS, TZS, and UGX. A platform fee is deducted from every
+    settlement — see /pricing for current rates.
+servers:
+  - url: https://avarampbackend.onrender.com
+    description: Production
+  - url: http://localhost:3001
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a merchant account
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                phone: { type: string }
+                businessName: { type: string }
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      user: { type: object }
+                      merchant: { type: object }
+                      token: { type: string, description: "7-day JWT bearer token" }
+
+  /auth/login:
+    post:
+      summary: Log in and receive a bearer token
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      user: { type: object }
+                      token: { type: string }
+
+  /merchants/me:
+    get:
+      summary: Get the authenticated merchant's profile
+      tags: [Merchants]
+      responses:
+        "200": { description: Merchant profile, content: { application/json: { schema: { $ref: "#/components/schemas/Merchant" } } } }
+
+  /merchants/payout:
+    patch:
+      summary: Update payout settings
+      tags: [Merchants]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payoutType: { type: string, enum: [phone, till, paybill] }
+                payoutAccount: { type: string }
+                payoutAccountRef: { type: string }
+                payoutCurrency: { type: string, enum: [KES, NGN, GHS, TZS, UGX] }
+                mobileNetwork: { type: string, description: "Carrier for phone payouts, e.g. Safaricom, MTN" }
+      responses:
+        "200": { description: Updated merchant }
+
+  /payments:
+    post:
+      summary: Create a payment
+      tags: [Payments]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string }
+          description: Safe retry key — the same key returns the original payment instead of creating a duplicate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreatePaymentInput" }
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: { $ref: "#/components/schemas/Payment" }
+        "403":
+          description: KYC_REQUIRED — payment amount is at or above the KYC threshold and the merchant account is not verified
+    get:
+      summary: List payments for the authenticated merchant
+      tags: [Payments]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [PENDING, CONFIRMED, SETTLED, REFUNDED, EXPIRED, FAILED] }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 100 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+      responses:
+        "200": { description: Paginated payments }
+
+  /payments/{id}:
+    get:
+      summary: Get a payment by ID
+      tags: [Payments]
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Payment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: { $ref: "#/components/schemas/Payment" }
+
+  /payments/analytics:
+    get:
+      summary: Analytics summary for the authenticated merchant
+      tags: [Payments]
+      responses:
+        "200": { description: Analytics summary }
+
+  /payments/statement:
+    get:
+      summary: Download a CSV statement of settled payments
+      tags: [Payments]
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema: { type: string }
+
+  /settlements:
+    post:
+      summary: Manually trigger settlement for a confirmed payment
+      tags: [Settlements]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [paymentId]
+              properties:
+                paymentId: { type: string }
+      responses:
+        "200": { description: Settlement initiated }
+
+  /api-keys:
+    post:
+      summary: Generate a new API key
+      tags: [API Keys]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                mode: { type: string, enum: [live, test], default: live }
+      responses:
+        "201":
+          description: >
+            Key created. The plaintext `key` field is returned exactly once —
+            it is not retrievable again.
+    get:
+      summary: List API keys (masked)
+      tags: [API Keys]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200": { description: List of keys }
+
+  /api-keys/{id}:
+    delete:
+      summary: Revoke an API key
+      tags: [API Keys]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Revoked }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Merchant-scoped API key from Dashboard → Settings → API Keys.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Merchant:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        payoutType: { type: string }
+        payoutAccount: { type: string }
+        payoutCurrency: { type: string }
+        mobileNetwork: { type: string, nullable: true }
+
+    CreatePaymentInput:
+      type: object
+      required: [fiatCurrency]
+      properties:
+        amountFiat: { type: string, description: "Fiat amount you want to receive, e.g. \"500\"" }
+        amountUsdc: { type: string, description: "Direct USDC amount (legacy alternative to amountFiat)" }
+        fiatCurrency: { type: string, enum: [KES, NGN, GHS, TZS, UGX] }
+        phone: { type: string }
+        reference: { type: string }
+        metadata: { type: object }
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [PENDING, CONFIRMED, SETTLED, REFUNDED, EXPIRED, FAILED] }
+        depositAddress: { type: string }
+        amountUsdc: { type: string }
+        fiatAmount: { type: string }
+        fiatCurrency: { type: string }
+        feeBps: { type: integer, nullable: true, description: "Platform fee in basis points, set once settled" }
+        feeAmount: { type: string, nullable: true, description: "Platform fee deducted from fiatAmount, set once settled" }
+        settlementReference: { type: string, nullable: true }
+        isTest: { type: boolean }
+        reference: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
