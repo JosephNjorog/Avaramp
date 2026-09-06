@@ -1,5 +1,6 @@
 import { prisma } from "../../shared/database/prisma";
 import { webhookQueue } from "../../shared/queue/queues";
+import { DEFAULT_FEE_BPS } from "../../shared/constants";
 
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -37,7 +38,7 @@ export class AdminService {
       prisma.payment.groupBy({ by: ["status"], _count: true }),
       prisma.payment.findMany({
         where: { status: "SETTLED" },
-        select: { amountUsdc: true },
+        select: { amountUsdc: true, feeBps: true },
       }),
     ]);
 
@@ -45,7 +46,10 @@ export class AdminService {
       (sum, p) => sum + parseFloat(p.amountUsdc || "0"),
       0
     );
-    const estimatedFeeRevenue = totalUsdcVolume * 0.015;
+    const feeRevenue = settledPayments.reduce(
+      (sum, p) => sum + parseFloat(p.amountUsdc || "0") * ((p.feeBps ?? DEFAULT_FEE_BPS) / 10000),
+      0
+    );
 
     const statusMap: Record<string, number> = {};
     for (const g of paymentsByStatus) {
@@ -62,7 +66,7 @@ export class AdminService {
       paymentsByStatus: statusMap,
       totalPayments: Object.values(statusMap).reduce((a, b) => a + b, 0),
       totalUsdcVolume,
-      estimatedFeeRevenue,
+      feeRevenue,
     };
   }
 
@@ -251,6 +255,7 @@ export class AdminService {
           amountUsdc: true,
           amountFiat: true,
           fiatCurrency: true,
+          feeBps: true,
           settledAt: true,
           merchantId: true,
           merchant: { select: { name: true, feeOverrideBps: true } },
@@ -264,7 +269,7 @@ export class AdminService {
           feeOverrideBps: true,
           payments: {
             where: { status: "SETTLED" },
-            select: { amountUsdc: true, fiatCurrency: true },
+            select: { amountUsdc: true, fiatCurrency: true, feeBps: true },
           },
         },
       }),
@@ -274,7 +279,10 @@ export class AdminService {
       (s, p) => s + parseFloat(p.amountUsdc || "0"),
       0
     );
-    const estimatedFeeRevenue = totalUsdcVolume * 0.015;
+    const feeRevenue = settledPayments.reduce(
+      (s, p) => s + parseFloat(p.amountUsdc || "0") * ((p.feeBps ?? DEFAULT_FEE_BPS) / 10000),
+      0
+    );
 
     // Fiat volume by currency
     const fiatVolumeByCurrency: Record<string, number> = {};
@@ -284,14 +292,14 @@ export class AdminService {
     }
 
     // Revenue by day (last 30 days)
-    const dayMap: Record<string, { usdcVolume: number; estimatedFee: number }> = {};
+    const dayMap: Record<string, { usdcVolume: number; fee: number }> = {};
     for (const p of settledPayments) {
       if (!p.settledAt || p.settledAt < thirtyDaysAgo) continue;
       const day = fmtDate(p.settledAt);
-      if (!dayMap[day]) dayMap[day] = { usdcVolume: 0, estimatedFee: 0 };
+      if (!dayMap[day]) dayMap[day] = { usdcVolume: 0, fee: 0 };
       const usdc = parseFloat(p.amountUsdc || "0");
       dayMap[day].usdcVolume += usdc;
-      dayMap[day].estimatedFee += usdc * 0.015;
+      dayMap[day].fee += usdc * ((p.feeBps ?? DEFAULT_FEE_BPS) / 10000);
     }
     const revenueByDay = Object.entries(dayMap)
       .map(([date, v]) => ({ date, ...v }))
@@ -300,10 +308,12 @@ export class AdminService {
     // Fee by merchant
     const feeByMerchant = merchantData.map((m) => {
       const volume = m.payments.reduce((s, p) => s + parseFloat(p.amountUsdc || "0"), 0);
-      const feeBps = m.feeOverrideBps ?? 150;
-      const fee = volume * (feeBps / 10000);
+      const fee = m.payments.reduce(
+        (s, p) => s + parseFloat(p.amountUsdc || "0") * ((p.feeBps ?? m.feeOverrideBps ?? DEFAULT_FEE_BPS) / 10000),
+        0
+      );
       const currencies = [...new Set(m.payments.map((p) => p.fiatCurrency))];
-      return { merchantId: m.id, merchantName: m.name, volume, feeBps, fee, currencies };
+      return { merchantId: m.id, merchantName: m.name, volume, feeBps: m.feeOverrideBps ?? DEFAULT_FEE_BPS, fee, currencies };
     });
 
     // Top merchants by volume
@@ -319,7 +329,7 @@ export class AdminService {
 
     return {
       totalUsdcVolume,
-      estimatedFeeRevenue,
+      feeRevenue,
       totalFiatVolume: fiatVolumeByCurrency,
       revenueByDay,
       feeByMerchant,
