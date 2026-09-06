@@ -19,8 +19,25 @@ export class PaymentController {
         if (merchant) merchantId = merchant.id;
       }
 
-      const result = await service.createPayment({ ...req.body, merchantId, userId });
+      const isTest = (req as any).isTestKey === true;
+      const result = await service.createPayment({ ...req.body, merchantId, userId, isTest });
       res.status(201).json({ success: true, data: result });
+    } catch (err) { next(err); }
+  }
+
+  async statement(req: Request, res: Response, next: NextFunction) {
+    try {
+      const apiKeyMerchantId = (req as any).merchantId as string | undefined;
+      let merchantId = apiKeyMerchantId;
+      if (!merchantId) {
+        const userId = (req as any).user?.sub;
+        const merchant = await prisma.merchant.findUnique({ where: { userId }, select: { id: true } });
+        merchantId = merchant?.id;
+      }
+      const csv = await service.getStatementCsv(merchantId ?? "");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", 'attachment; filename="settlement-statement.csv"');
+      res.send(csv);
     } catch (err) { next(err); }
   }
 
