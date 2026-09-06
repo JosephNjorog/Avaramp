@@ -10,7 +10,7 @@ dotenv.config();
  *   DEPLOYER_PRIVATE_KEY   — deployer wallet private key
  *   TREASURY_ADDRESS       — founder multisig / treasury address
  *   USDC_ADDRESS           — USDC token address on target network
- *   PROTOCOL_FEE_BPS       — default fee in basis points (e.g. 150 = 1.5%)
+ *   PROTOCOL_FEE_BPS       — default fee in basis points (e.g. 300 = 3%)
  *
  * Fuji testnet USDC: 0x5425890298aed601595a70AB815c96711a31Bc65
  * Mainnet USDC:      0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E
@@ -30,7 +30,7 @@ async function main() {
 
   const treasuryAddress = process.env.TREASURY_ADDRESS;
   const usdcAddress     = process.env.USDC_ADDRESS;
-  const feeBps          = Number(process.env.PROTOCOL_FEE_BPS ?? "150"); // default 1.5%
+  const feeBps          = Number(process.env.PROTOCOL_FEE_BPS ?? "300"); // default 3%
 
   if (!treasuryAddress || !usdcAddress) {
     throw new Error("Set TREASURY_ADDRESS and USDC_ADDRESS in .env");
