@@ -135,7 +135,8 @@ export default function MerchantDetailPage() {
 
           {[
             { label: "Wallet Address", value: merchant.walletAddress, mono: true, copy: true },
-            { label: "M-Pesa Till", value: merchant.mpesaTill },
+            { label: "Payout Account", value: merchant.payoutAccount },
+            { label: "Mobile Network", value: merchant.mobileNetwork ?? "—" },
             {
               label: "Webhook Secret",
               value: merchant.webhookSecret
