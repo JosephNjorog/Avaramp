@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { authApi, merchantsApi, consentApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Button from "@/components/ui/Button";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 // ── Two-step schema ───────────────────────────────────────────────────────────
 
@@ -320,7 +321,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right panel — hidden on mobile */}
-      <div className="hidden lg:flex w-[420px] bg-card border-l border-border flex-col justify-center px-12">
+      <GradientHero strong className="hidden lg:flex w-[420px] bg-card border-l border-border flex-col justify-center px-12">
         <div className="mb-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-4">
             What you get
@@ -362,9 +363,9 @@ export default function RegisterPage() {
         </div>
 
         <p className="text-xs text-muted text-center mt-6">
-          1.5% per successful settlement · No monthly fee
+          3% per successful settlement · No monthly fee
         </p>
-      </div>
+      </GradientHero>
     </div>
   );
 }
