@@ -1,6 +1,7 @@
 import express from "express";
 import cors    from "cors";
 import helmet  from "helmet";
+import path    from "path";
 
 import authRoutes       from "./Modules/auth/auth.routes";
 import siweRoutes       from "./Modules/auth/siwe.routes";
@@ -76,6 +77,14 @@ app.get("/health", async (_, res) => {
     responseMs:  Date.now() - t0,
     checks,
   });
+});
+
+// API documentation downloads — served from the repo root, not compiled with tsc
+app.get("/openapi.yaml", (_req, res) => {
+  res.type("text/yaml").sendFile(path.join(process.cwd(), "openapi.yaml"));
+});
+app.get("/postman_collection.json", (_req, res) => {
+  res.type("application/json").sendFile(path.join(process.cwd(), "postman_collection.json"));
 });
 
 app.use("/auth",        authRoutes);
