@@ -22,6 +22,7 @@ export async function authenticateMerchant(req: Request, res: Response, next: Ne
       repo.touchLastUsed(record.id).catch(() => {});
       (req as any).merchantId = record.merchantId;
       (req as any).authType = "apiKey";
+      (req as any).isTestKey = record.isTest;
       return next();
     } catch {
       return next(new UnauthorizedError("Invalid API key"));
