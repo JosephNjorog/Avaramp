@@ -11,7 +11,7 @@ const FAQS = [
   },
   {
     q: "How long does settlement take?",
-    a: "Typically under 2 minutes. Avalanche C-Chain finalizes in ~2 seconds. Once confirmed on-chain, we immediately trigger the M-Pesa B2C transfer via Daraja. The M-Pesa push notification arrives within seconds of the blockchain confirmation.",
+    a: "Typically under 2 minutes. Avalanche C-Chain finalizes in ~2 seconds. Once confirmed on-chain, we immediately trigger the mobile money payout through our settlement network. The M-Pesa push notification arrives within seconds of the blockchain confirmation.",
   },
   {
     q: "Do I need to KYC to start?",
