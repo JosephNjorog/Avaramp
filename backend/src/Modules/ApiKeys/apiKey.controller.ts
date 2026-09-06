@@ -15,7 +15,8 @@ export class ApiKeyController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const merchantId = await resolveMerchantId(req);
-      const result = await apiKeyService.create(merchantId, req.body?.name);
+      const mode = req.body?.mode === "test" ? "test" : "live";
+      const result = await apiKeyService.create(merchantId, req.body?.name, mode);
       res.status(201).json({ success: true, data: result });
     } catch (err) { next(err); }
   }
