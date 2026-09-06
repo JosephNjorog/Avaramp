@@ -73,11 +73,11 @@ CUSTOMER (crypto holder)         AVARAMP                    MERCHANT
         │         Glacier API detects on-chain deposit          │
         │                            │→ Payment CONFIRMED        │
         │                            │                          │
-        │                            ├── Paystack Transfer ────►│
+        │                            ├── Settlement payout ────►│
         │                            │   5000 KES sent to       │
         │                            │   merchant M-Pesa / till │
         │                            │                          │
-        │         Paystack webhook: transfer.success            │
+        │         Settlement webhook: transfer.success           │
         │                            │→ Payment SETTLED          │
         │                            │                          │
   Customer page ✅                   │         Merchant gets    │
@@ -140,7 +140,7 @@ AvaRamp FX Service (live rates via oracle)
         ▼  Avaramp fee: 1.5%  →  deduct 37.5 KES
         │
         ▼
-Paystack Transfer: 2,462.5 KES → Merchant M-Pesa
+Settlement payout: 2,462.5 KES → Merchant M-Pesa
 ```
 
 - FX rate locked at payment creation — no slippage risk for merchant
@@ -202,7 +202,7 @@ Paystack Transfer: 2,462.5 KES → Merchant M-Pesa
 
 ### Unit Economics
 
-- Paystack transfer fee: ~₦50 flat (< $0.05)
+- Settlement transfer fee: ~₦50 flat (< $0.05)
 - Glacier API: usage-based, negligible at scale
 - Avalanche on-chain watching: < $0.01 per payment
 
@@ -265,7 +265,7 @@ POST your-webhook-url
 - Backend: Express + TypeScript + Prisma (PostgreSQL on Neon)
 - Queue: BullMQ + Redis (deposit watching, settlement, webhook delivery)
 - Chain: Avalanche C-Chain via Glacier API
-- Settlement: Paystack Transfers API (KES/NGN/GHS/TZS/UGX)
+- Settlement: our own payout network (KES/NGN/GHS/TZS/UGX)
 
 ---
 
@@ -289,7 +289,7 @@ POST your-webhook-url
 - ✅ Payment link creation with live FX (USDC ↔ KES/NGN/GHS/TZS/UGX)
 - ✅ Customer pay page — QR code + WalletConnect + manual send
 - ✅ On-chain USDC deposit detection (Avalanche Glacier API)
-- ✅ Automatic fiat settlement via Paystack Transfers
+- ✅ Automatic fiat settlement via our settlement network
 - ✅ Multi-currency payout (M-Pesa personal, M-Pesa till, Paybill, Airtel, MTN)
 - ✅ Merchant dashboard with analytics and payment history
 - ✅ Admin panel — fee tracking, merchant management, volume stats
@@ -321,7 +321,7 @@ The moat is not the code — it is the settlement network relationships and the 
 ## SLIDE 16 — Why Now
 
 - **Regulation is clarifying** — Kenya VASP framework 2024, Nigeria SEC crypto rules, Ghana BSAG
-- **Paystack has 200K+ merchants** — distribution exists, we just need to reach it
+- **Mobile money penetration already exceeds 80% in Kenya** — distribution exists, we just need to reach it
 - **Avalanche Foundation is active in Africa** — ecosystem grants available
 - **Stablecoin volume in Africa up 40% YoY** (Chainalysis 2024)
 - **Diaspora remittances = $100B+/year to Africa** — current cost: 6–9%; we can do 1.5%
@@ -332,7 +332,7 @@ The moat is not the code — it is the settlement network relationships and the 
 
 **For builders in this call:**
 
-- **Test the flow tonight** — create a payment link with your Paystack test keys, send yourself USDC on Avalanche testnet
+- **Test the flow tonight** — create a payment link, send yourself USDC on Avalanche testnet
 - **Build on the API** — escrow, subscriptions, bulk payroll — all possible on these rails
 - **Connect** — if you have merchant distribution or a fintech problem that needs this corridor, let's talk
 
@@ -340,7 +340,7 @@ The moat is not the code — it is the settlement network relationships and the 
 
 - Blockchain deposit watching at scale (Glacier API + BullMQ)
 - FX oracle with locked rates at payment creation
-- Paystack settlement with automatic recipient creation
+- Settlement network integration with automatic payout routing
 - All wired together into a 3-minute end-to-end flow
 
 > "The best payment infrastructure is invisible. Your customer sends crypto. Your merchant gets paid. Nobody had to understand why."
@@ -353,7 +353,7 @@ The moat is not the code — it is the settlement network relationships and the 
 |---|---|
 | Customer pays in | USDC (Avalanche C-Chain) |
 | Merchant receives in | KES / NGN / GHS / TZS / UGX |
-| Settlement method | Paystack Transfer → M-Pesa / till / paybill |
+| Settlement method | Our settlement network → M-Pesa / till / paybill |
 | Settlement time | Under 3 minutes |
 | Platform fee | 1.5% |
 | Payment expiry | 30 minutes |
