@@ -9,8 +9,8 @@ export class MerchantService {
   async createMerchant(dto: CreateMerchantDto) {
     const webhookSecret = crypto.randomBytes(32).toString("hex");
 
-    // Resolve payout account: explicit payoutAccount > mpesaTill > phone
-    const payoutAccount = dto.payoutAccount ?? dto.mpesaTill ?? dto.phone ?? "";
+    // Resolve payout account: explicit payoutAccount > phone
+    const payoutAccount = dto.payoutAccount ?? dto.phone ?? "";
     const payoutType    = dto.payoutType    ?? "till";
     const payoutCurrency = dto.payoutCurrency ?? "KES";
 
@@ -18,11 +18,11 @@ export class MerchantService {
       name:             dto.name,
       email:            dto.email         ?? `${Date.now()}@placeholder.avaramp.io`,
       walletAddress:    dto.walletAddress ?? `0x${crypto.randomBytes(20).toString("hex")}`,
-      mpesaTill:        payoutAccount,   // keep in sync for backward compatibility
       payoutType,
       payoutAccount,
       payoutAccountRef: dto.payoutAccountRef,
       payoutCurrency,
+      mobileNetwork:    dto.mobileNetwork,
       webhookUrl:       dto.webhookUrl,
       webhookSecret,
     });
@@ -47,11 +47,9 @@ export class MerchantService {
       payoutAccount?: string;
       payoutAccountRef?: string;
       payoutCurrency?: string;
+      mobileNetwork?: string;
     }
   ) {
-    const update: any = { ...data };
-    // Keep mpesaTill in sync if payoutAccount changes
-    if (data.payoutAccount) update.mpesaTill = data.payoutAccount;
-    return repo.update(merchantId, update);
+    return repo.update(merchantId, data);
   }
 }
