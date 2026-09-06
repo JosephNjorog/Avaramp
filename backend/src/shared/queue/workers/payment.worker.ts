@@ -34,8 +34,17 @@ export const paymentWorker = new Worker(
       return { expired: true };
     }
 
-    // Poll Glacier for USDC transfers to the deposit address
-    const transfers = await glacier.getERC20Transfers(payment.depositAddress, USDC_ADDRESS);
+    // Test-mode payments (created with a test API key) never receive real
+    // on-chain USDC — synthesize a matching transfer instead of polling Glacier,
+    // so the rest of this pipeline (and settlement) runs exactly as it would for real.
+    const transfers = payment.isTest
+      ? [{
+          txHash: `TEST_${paymentId}`,
+          blockNumber: "0",
+          from: { address: "0xTEST0000000000000000000000000000000000" },
+          value: String(Math.round(parseFloat(payment.amountUsdc as string) * 1e6)),
+        }]
+      : await glacier.getERC20Transfers(payment.depositAddress, USDC_ADDRESS);
 
     if (!transfers || transfers.length === 0) {
       // No deposit yet — throw so BullMQ retries with backoff
