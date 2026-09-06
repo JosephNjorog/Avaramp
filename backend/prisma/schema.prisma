@@ -52,6 +52,7 @@ model ApiKey {
   name       String
   prefix     String
   hashedKey  String    @unique
+  isTest     Boolean   @default(false)
   lastUsedAt DateTime?
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())
@@ -81,6 +82,9 @@ model Payment {
   fxRate          Float?
   fiatAmount      String?
   settlementReference String?
+  feeBps          Int?
+  feeAmount       String?
+  isTest          Boolean         @default(false)
   settledAt       DateTime?
   metadata        Json?
   createdAt       DateTime        @default(now())
