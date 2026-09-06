@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const CURRENCIES = [
   { flag: "🇰🇪", code: "KES", name: "Kenya",    via: "M-Pesa (phone, till, paybill)" },
-  { flag: "🇳🇬", code: "NGN", name: "Nigeria",  via: "Bank transfer via Paystack"    },
+  { flag: "🇳🇬", code: "NGN", name: "Nigeria",  via: "Bank transfer"                 },
   { flag: "🇬🇭", code: "GHS", name: "Ghana",    via: "MTN Mobile Money"              },
   { flag: "🇹🇿", code: "TZS", name: "Tanzania", via: "Vodacom M-Pesa"               },
   { flag: "🇺🇬", code: "UGX", name: "Uganda",   via: "Airtel Money"                 },
