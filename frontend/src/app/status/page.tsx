@@ -5,6 +5,7 @@ import { CheckCircle2, AlertCircle, Clock, RefreshCw, Zap, Activity } from "luci
 import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -206,7 +207,7 @@ export default function StatusPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
 
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+          <GradientHero className="flex items-start justify-between gap-4 mb-8 flex-wrap pt-4 pb-2 -mt-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Link href="/" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
@@ -239,7 +240,7 @@ export default function StatusPage() {
                 Refresh
               </button>
             </div>
-          </div>
+          </GradientHero>
 
           {/* Overall banner */}
           <div className={`rounded-2xl border p-5 mb-8 flex items-center gap-4 ${overallCfg.bg} ${overallCfg.border}`}>
