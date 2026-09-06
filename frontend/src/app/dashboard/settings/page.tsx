@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Copy, Check } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Copy, Check, Plus, Trash2, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { usersApi, merchantsApi } from "@/lib/api";
+import { usersApi, merchantsApi, apiKeysApi } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
 // ── Payout form ───────────────────────────────────────────────────────────────
@@ -16,6 +18,7 @@ const payoutSchema = z.object({
   payoutAccount:    z.string().min(1, "Required"),
   payoutAccountRef: z.string().optional(),
   payoutCurrency:   z.enum(["KES", "NGN", "GHS", "TZS", "UGX"]),
+  mobileNetwork:    z.string().optional(),
 });
 type PayoutForm = z.infer<typeof payoutSchema>;
 
@@ -103,8 +106,6 @@ function Toggle({ label, sub, defaultOn, storageKey }: { label: string; sub: str
 
 export default function SettingsPage() {
   const { user, setAuth, token } = useAuthStore();
-  const [showKey, setShowKey]     = useState(false);
-  const [keyCopied, setKeyCopied] = useState(false);
 
   const payoutForm = useForm<PayoutForm>({
     resolver: zodResolver(payoutSchema),
@@ -112,6 +113,7 @@ export default function SettingsPage() {
       payoutType:     "till",
       payoutAccount:  "",
       payoutCurrency: "KES",
+      mobileNetwork:  "",
     },
   });
   const payoutType = payoutForm.watch("payoutType");
@@ -122,15 +124,13 @@ export default function SettingsPage() {
       if (!m) return;
       payoutForm.reset({
         payoutType:       (m.payoutType     as PayoutForm["payoutType"])     ?? "till",
-        payoutAccount:    m.payoutAccount   ?? m.mpesaTill ?? "",
+        payoutAccount:    m.payoutAccount   ?? "",
         payoutAccountRef: m.payoutAccountRef ?? "",
         payoutCurrency:   (m.payoutCurrency  as PayoutForm["payoutCurrency"]) ?? "KES",
+        mobileNetwork:    m.mobileNetwork ?? "",
       });
     }).catch(() => {});
   }, []);
-
-  // The JWT token is the real bearer credential — use it in Authorization: Bearer headers
-  const apiKey = token ?? "";
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -148,13 +148,6 @@ export default function SettingsPage() {
     } catch (err: any) {
       toast.error(err.message || "Failed to save profile");
     }
-  };
-
-  const copyKey = () => {
-    navigator.clipboard.writeText(apiKey);
-    setKeyCopied(true);
-    toast.success("API key copied");
-    setTimeout(() => setKeyCopied(false), 2000);
   };
 
   return (
@@ -194,33 +187,8 @@ export default function SettingsPage() {
         </form>
       </Section>
 
-      {/* API key */}
-      <Section title="API Token">
-        <Field label="Bearer token" sub="Include in Authorization: Bearer header for API calls">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-surface border border-border rounded-lg px-3 py-2.5 font-mono text-xs overflow-hidden">
-              {showKey
-                ? <span className="text-indigo-DEFAULT">{apiKey}</span>
-                : <span className="text-muted">{"•".repeat(40)}</span>}
-            </div>
-            <button
-              onClick={() => setShowKey(!showKey)}
-              className="w-8 h-8 rounded-lg bg-surface border border-border text-muted hover:text-secondary flex items-center justify-center transition-colors shrink-0"
-            >
-              {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </button>
-            <button
-              onClick={copyKey}
-              className="w-8 h-8 rounded-lg bg-surface border border-border text-muted hover:text-secondary flex items-center justify-center transition-colors shrink-0"
-            >
-              {keyCopied ? <Check className="w-3.5 h-3.5 text-green-DEFAULT" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-          <p className="text-xs text-muted mt-2">
-            This token expires in 7 days. Never commit it to source control. Re-login to refresh it.
-          </p>
-        </Field>
-      </Section>
+      {/* API keys */}
+      <ApiKeysSection />
 
       {/* Password */}
       <Section title="Password">
@@ -309,6 +277,16 @@ export default function SettingsPage() {
               />
             </Field>
           )}
+          {payoutType === "phone" && (
+            <Field label="Mobile Network" sub="Carrier for this phone number, e.g. Safaricom, MTN, Airtel">
+              <input
+                {...payoutForm.register("mobileNetwork")}
+                type="text"
+                placeholder="Safaricom"
+                className="input"
+              />
+            </Field>
+          )}
           <Field label="Settlement Currency" sub="Currency you receive payouts in">
             <select {...payoutForm.register("payoutCurrency")} className="input">
               <option value="KES">KES — Kenyan Shilling</option>
@@ -334,5 +312,140 @@ export default function SettingsPage() {
         <Toggle label="Weekly summary"            sub="Digest of payment volume and settlements"            storageKey="weekly_summary"      defaultOn={false} />
       </Section>
     </div>
+  );
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+type ApiKey = {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
+function ApiKeysSection() {
+  const queryClient = useQueryClient();
+  const [newKeyName, setNewKeyName] = useState("");
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["api-keys"],
+    queryFn: () => apiKeysApi.list().then((res) => res.data.data as ApiKey[]),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (name: string) => apiKeysApi.create(name).then((res) => res.data.data),
+    onSuccess: (created) => {
+      setRevealedKey(created.key);
+      setNewKeyName("");
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to create API key"),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (id: string) => apiKeysApi.revoke(id),
+    onSuccess: () => {
+      toast.success("API key revoked");
+      queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to revoke API key"),
+  });
+
+  const copyRevealedKey = () => {
+    if (!revealedKey) return;
+    navigator.clipboard.writeText(revealedKey);
+    setCopied(true);
+    toast.success("API key copied");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const activeKeys = (data ?? []).filter((k) => !k.revokedAt);
+
+  return (
+    <Section title="API Keys">
+      {revealedKey && (
+        <div className="my-4 rounded-lg border border-amber-DEFAULT/30 bg-amber-dim p-4">
+          <p className="text-xs font-medium text-amber-DEFAULT mb-2">
+            Copy this key now — it won&apos;t be shown again.
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-surface border border-border rounded-lg px-3 py-2.5 font-mono text-xs text-indigo-DEFAULT overflow-x-auto whitespace-nowrap">
+              {revealedKey}
+            </code>
+            <button
+              onClick={copyRevealedKey}
+              className="w-8 h-8 rounded-lg bg-surface border border-border text-muted hover:text-secondary flex items-center justify-center transition-colors shrink-0"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-green-DEFAULT" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+          <button
+            onClick={() => setRevealedKey(null)}
+            className="text-xs text-muted hover:text-secondary mt-2"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
+      <Field label="Generate new key" sub="Use in an x-api-key header for server-to-server integrations">
+        <div className="flex gap-2">
+          <input
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            type="text"
+            placeholder="e.g. Production backend"
+            className="input flex-1"
+          />
+          <Button
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            onClick={() => newKeyName.trim() && createMutation.mutate(newKeyName.trim())}
+            loading={createMutation.isPending}
+          >
+            Generate
+          </Button>
+        </div>
+      </Field>
+
+      <div className="py-4">
+        {isLoading ? (
+          <p className="text-xs text-muted">Loading keys…</p>
+        ) : activeKeys.length === 0 ? (
+          <p className="text-xs text-muted">No API keys yet — generate one above to integrate programmatically.</p>
+        ) : (
+          <div className="space-y-2">
+            {activeKeys.map((key) => (
+              <div
+                key={key.id}
+                className="flex items-center justify-between gap-3 bg-surface border border-border rounded-lg px-3 py-2.5"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <KeyRound className="w-3.5 h-3.5 text-muted shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm text-primary truncate">{key.name}</p>
+                    <p className="text-2xs text-muted font-mono">
+                      {key.prefix}… · created {formatDate(key.createdAt)}
+                      {key.lastUsedAt ? ` · last used ${formatDate(key.lastUsedAt)}` : " · never used"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => revokeMutation.mutate(key.id)}
+                  disabled={revokeMutation.isPending}
+                  className="w-8 h-8 rounded-lg bg-surface border border-border text-muted hover:text-red-DEFAULT flex items-center justify-center transition-colors shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
