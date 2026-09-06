@@ -228,8 +228,7 @@ export default function PrivacyPage() {
         <SubSection title="6.1 Service Providers">
           <p>We share data with carefully selected service providers who process it on our behalf under strict data processing agreements:</p>
           <Ul items={[
-            "Safaricom Limited (M-Pesa) — phone number and payment amount for settlement",
-            "MTN Group / Airtel Africa — phone number and payment amount for settlement",
+            "Our regional payment settlement partners — phone number and payment amount for settlement",
             "Neon / database infrastructure providers — encrypted transaction and account data",
             "Render / cloud hosting providers — application data within their infrastructure",
             "KYC verification providers — identity documents for verification",
