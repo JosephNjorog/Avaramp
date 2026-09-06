@@ -1,0 +1,52 @@
+# Render Blueprint — declares the backend service already configured manually
+# in the Render dashboard, so the deployment is reproducible from the repo.
+# Env var values are never stored here (sync: false) — set them in the
+# Render dashboard as already done today.
+services:
+  - type: web
+    name: avaramp-backend
+    runtime: node
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: AVALANCHE_RPC_URL
+        sync: false
+      - key: GLACIER_API_KEY
+        sync: false
+      - key: OPERATOR_PRIVATE_KEY
+        sync: false
+      - key: HD_MNEMONIC
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PRETIUM_API_KEY
+        sync: false
+      - key: PRETIUM_BASE_URL
+        sync: false
+      - key: PRETIUM_SETTLEMENT_ADDRESS
+        sync: false
+      - key: PRETIUM_WEBHOOK_SECRET
+        sync: false
+      - key: PRETIUM_SKIP_SETTLEMENT
+        value: "true"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: PAYMENT_GATEWAY_ADDRESS
+        sync: false
+      - key: MERCHANT_REGISTRY_ADDRESS
+        sync: false
+      - key: DEPLOYER_ADDRESS
+        sync: false
