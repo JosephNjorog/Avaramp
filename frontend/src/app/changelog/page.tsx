@@ -20,12 +20,19 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
-    version: "v1.4.0",
-    date: "June 2026",
+    version: "v1.5.0",
+    date: "September 2026",
     label: "Latest",
     changes: [
-      { type: "feature",     text: "Daraja API integration: full M-Pesa support for phone numbers (B2C), Till numbers, and Paybill numbers (B2B)." },
-      { type: "improvement", text: "KES settlements auto-route through Daraja when configured; gracefully falls back to Paystack." },
+      { type: "feature",     text: "Merchant-scoped API keys: generate, list, and revoke keys from Settings for programmatic integration via an x-api-key header." },
+      { type: "improvement", text: "Settlement moved onto a single unified payout network across all supported currencies, including FX rate sourcing." },
+    ],
+  },
+  {
+    version: "v1.4.0",
+    date: "June 2026",
+    changes: [
+      { type: "feature",     text: "Full M-Pesa support for phone numbers, Till numbers, and Paybill numbers." },
       { type: "improvement", text: "Admin role changes take effect immediately without requiring re-authentication." },
     ],
   },
@@ -48,14 +55,14 @@ const RELEASES: Release[] = [
       { type: "feature",  text: "Admin panel: fee tracking, merchant management, volume stats, consent audit log." },
       { type: "feature",  text: "Consent recording: TERMS, PRIVACY, and COOKIES acceptance logged at registration with IP and user-agent." },
       { type: "improvement", text: "Platform fee set to 1.5% (150 bps), deducted from USDC before settlement." },
-      { type: "improvement", text: "Paystack webhook: improved event handling reliability and error reporting." },
+      { type: "improvement", text: "Settlement webhook: improved event handling reliability and error reporting." },
     ],
   },
   {
     version: "v1.1.0",
     date: "March 2026",
     changes: [
-      { type: "feature",  text: "Paystack Transfers integration: automated KES, NGN, GHS, TZS, UGX settlements to mobile money accounts." },
+      { type: "feature",  text: "Automated KES, NGN, GHS, TZS, UGX settlements to mobile money accounts." },
       { type: "feature",  text: "Multi-currency support: M-Pesa personal (phone), M-Pesa till, Paybill, Airtel Money, MTN MoMo." },
       { type: "feature",  text: "Merchant dashboard: payment history, 7-day volume chart, settlement analytics." },
       { type: "feature",  text: "Idempotency-Key header support — safe retries for payment creation." },
