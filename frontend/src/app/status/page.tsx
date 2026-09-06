@@ -26,7 +26,7 @@ interface HealthResponse {
     database:  CheckResult;
     queue:     CheckResult;
     avalanche: CheckResult;
-    paystack:  CheckResult;
+    settlement: CheckResult;
   };
 }
 
@@ -48,7 +48,7 @@ const SERVICE_META: Record<string, { label: string; description: string }> = {
   database:  { label: "Database",               description: "Neon PostgreSQL — primary datastore" },
   queue:     { label: "Queue (Redis)",           description: "BullMQ workers — deposit watching, settlement, webhook delivery" },
   avalanche: { label: "Avalanche C-Chain",       description: "On-chain USDC deposit detection via Glacier API" },
-  paystack:  { label: "Paystack",                description: "Fiat settlement API — NGN, GHS, TZS, UGX" },
+  settlement: { label: "Settlement Network",      description: "Fiat payout & FX rates across all supported currencies" },
   dashboard: { label: "Dashboard",               description: "Merchant and admin web interface (Vercel)" },
 };
 
@@ -152,7 +152,7 @@ export default function StatusPage() {
         { key: "database",  ...SERVICE_META.database,  ...fallback(c.database)  },
         { key: "queue",     ...SERVICE_META.queue,     ...fallback(c.queue)     },
         { key: "avalanche", ...SERVICE_META.avalanche, ...fallback(c.avalanche) },
-        { key: "paystack",  ...SERVICE_META.paystack,  ...fallback(c.paystack)  },
+        { key: "settlement", ...SERVICE_META.settlement, ...fallback(c.settlement) },
         { key: "dashboard", ...SERVICE_META.dashboard, status: "up", latencyMs: latency },
       ]);
     } catch {
