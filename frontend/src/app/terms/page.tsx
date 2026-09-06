@@ -278,9 +278,7 @@ export default function TermsPage() {
         <p>The Service integrates with and depends upon third-party services including:</p>
         <Ul items={[
           "Avalanche Network — a public blockchain protocol we do not control",
-          "Safaricom M-Pesa (Daraja API) — for Kenya settlement",
-          "MTN Mobile Money — for Ghana, Uganda, and Nigeria settlement",
-          "Airtel Money — for additional African market settlement",
+          "Regional mobile money and banking networks — for fiat settlement across our supported markets",
           "Circle Internet Financial (USDC issuer) — we are not affiliated with Circle",
           "WalletConnect / Reown — for browser wallet connections on payment pages",
           "Neon / PostgreSQL — database infrastructure",
