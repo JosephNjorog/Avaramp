@@ -34,7 +34,7 @@ model Merchant {
   payoutAccount    String                        // phone number, till number, or paybill number
   payoutAccountRef String?                       // paybill account reference (e.g. account name/number)
   payoutCurrency   String    @default("KES")     // KES | NGN | GHS | TZS | UGX
-  mpesaTill        String                        // kept for backward compatibility
+  mobileNetwork    String?                       // carrier for "phone" payouts, e.g. "Safaricom", "MTN", "Airtel"
   webhookUrl       String?
   webhookSecret    String
   feeOverrideBps   Int?
@@ -42,6 +42,21 @@ model Merchant {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   payments         Payment[]
+  apiKeys          ApiKey[]
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  merchantId String
+  merchant   Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name       String
+  prefix     String
+  hashedKey  String    @unique
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([merchantId])
 }
 
 model Payment {
@@ -58,9 +73,6 @@ model Payment {
   reference       String?
   depositAddress  String          @unique
   depositPk       String
-  // Paystack collection fields
-  paystackRef     String?         @unique
-  authorizationUrl String?
   status          PaymentStatus   @default(PENDING)
   expiresAt       DateTime
   confirmedTxHash String?
@@ -68,7 +80,7 @@ model Payment {
   onChainAmount   String?
   fxRate          Float?
   fiatAmount      String?
-  mpesaReceiptId  String?
+  settlementReference String?
   settledAt       DateTime?
   metadata        Json?
   createdAt       DateTime        @default(now())
