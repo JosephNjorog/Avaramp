@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 export const metadata = { title: "Blog — AvaRamp" };
 
@@ -35,7 +36,7 @@ const POSTS = [
     date:     "April 30, 2026",
     tag:      "Market",
     title:    "The Crypto-to-M-Pesa Corridor Is Broken. Here Is How We Fix It.",
-    excerpt:  "A crypto holder in London wants to pay a business in Nairobi. Today that takes 3 days, 5 steps, and 6–9% in fees. We collapse it to 3 minutes and 1.5%.",
+    excerpt:  "A crypto holder in London wants to pay a business in Nairobi. Today that takes 3 days, 5 steps, and 6–9% in fees. We collapse it to 3 minutes and 3%.",
     readTime: "5 min read",
   },
   {
@@ -66,7 +67,7 @@ export default function BlogPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
           {/* Header */}
-          <div className="mb-12">
+          <GradientHero className="mb-12 pt-4 pb-2 -mt-4">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border rounded-full px-3 py-1 mb-5">
               <BookOpen className="w-3 h-3" />
               Engineering & product writing
@@ -75,7 +76,7 @@ export default function BlogPage() {
             <p className="text-secondary text-lg">
               Deep dives into the technology, decisions, and market context behind AvaRamp.
             </p>
-          </div>
+          </GradientHero>
 
           {/* Featured post */}
           <div className="bg-card border border-border rounded-2xl p-7 mb-8 group hover:border-muted transition-colors">
