@@ -5,10 +5,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Check, Plus, Trash2, KeyRound } from "lucide-react";
+import { Copy, Check, Plus, Trash2, KeyRound, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { usersApi, merchantsApi, apiKeysApi } from "@/lib/api";
+import { usersApi, merchantsApi, apiKeysApi, paymentsApi } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 
@@ -304,6 +304,32 @@ export default function SettingsPage() {
         </form>
       </Section>
 
+      {/* Statements */}
+      <Section title="Statements">
+        <Field label="Settlement statement" sub="CSV of every settled payment, including fees deducted — for accounting and reconciliation">
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Download className="w-3.5 h-3.5" />}
+            onClick={async () => {
+              try {
+                const res = await paymentsApi.statement();
+                const url = URL.createObjectURL(new Blob([res.data], { type: "text/csv" }));
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "settlement-statement.csv";
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch (err: any) {
+                toast.error(err.message || "Failed to download statement");
+              }
+            }}
+          >
+            Download CSV
+          </Button>
+        </Field>
+      </Section>
+
       {/* Notifications */}
       <Section title="Notifications">
         <Toggle label="Payment received"          sub="Email when USDC deposit is confirmed"                storageKey="payment_received"    defaultOn />
@@ -320,6 +346,7 @@ type ApiKey = {
   id: string;
   name: string;
   prefix: string;
+  isTest: boolean;
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
@@ -328,6 +355,7 @@ type ApiKey = {
 function ApiKeysSection() {
   const queryClient = useQueryClient();
   const [newKeyName, setNewKeyName] = useState("");
+  const [newKeyMode, setNewKeyMode] = useState<"live" | "test">("live");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -337,7 +365,8 @@ function ApiKeysSection() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => apiKeysApi.create(name).then((res) => res.data.data),
+    mutationFn: ({ name, mode }: { name: string; mode: "live" | "test" }) =>
+      apiKeysApi.create(name, mode).then((res) => res.data.data),
     onSuccess: (created) => {
       setRevealedKey(created.key);
       setNewKeyName("");
@@ -401,15 +430,35 @@ function ApiKeysSection() {
             placeholder="e.g. Production backend"
             className="input flex-1"
           />
+          <div className="flex rounded-lg border border-border overflow-hidden shrink-0">
+            {(["live", "test"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setNewKeyMode(m)}
+                className={`px-3 h-9 text-xs font-medium capitalize transition-colors ${
+                  newKeyMode === m
+                    ? "bg-indigo-DEFAULT text-white"
+                    : "bg-surface text-muted hover:text-secondary"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
           <Button
             size="sm"
             icon={<Plus className="w-3.5 h-3.5" />}
-            onClick={() => newKeyName.trim() && createMutation.mutate(newKeyName.trim())}
+            onClick={() => newKeyName.trim() && createMutation.mutate({ name: newKeyName.trim(), mode: newKeyMode })}
             loading={createMutation.isPending}
           >
             Generate
           </Button>
         </div>
+        <p className="text-xs text-muted mt-2">
+          Test keys (<code className="font-mono">avr_test_…</code>) auto-confirm and auto-settle
+          without touching real crypto or fiat — safe for integration testing.
+        </p>
       </Field>
 
       <div className="py-4">
@@ -427,7 +476,14 @@ function ApiKeysSection() {
                 <div className="flex items-center gap-2.5 min-w-0">
                   <KeyRound className="w-3.5 h-3.5 text-muted shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm text-primary truncate">{key.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm text-primary truncate">{key.name}</p>
+                      {key.isTest && (
+                        <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-amber-dim text-amber-DEFAULT border border-amber-DEFAULT/20 shrink-0">
+                          TEST
+                        </span>
+                      )}
+                    </div>
                     <p className="text-2xs text-muted font-mono">
                       {key.prefix}… · created {formatDate(key.createdAt)}
                       {key.lastUsedAt ? ` · last used ${formatDate(key.lastUsedAt)}` : " · never used"}
