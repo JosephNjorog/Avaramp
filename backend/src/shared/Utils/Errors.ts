@@ -32,3 +32,9 @@ export class UnauthorizedError extends AppError {
     super(message, 401, "UNAUTHORIZED");
   }
 }
+
+export class KycRequiredError extends AppError {
+  constructor(message = "KYC verification required for this payment amount") {
+    super(message, 403, "KYC_REQUIRED");
+  }
+}
