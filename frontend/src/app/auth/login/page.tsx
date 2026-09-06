@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import Button from "@/components/ui/Button";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 const schema = z.object({
   email:    z.string().email("Enter a valid email"),
@@ -40,7 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+    <GradientHero className="min-h-screen flex items-center justify-center px-4 bg-bg">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 justify-center mb-8">
@@ -108,6 +109,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </GradientHero>
   );
 }
