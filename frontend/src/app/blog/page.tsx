@@ -15,11 +15,11 @@ const POSTS = [
     readTime: "6 min read",
   },
   {
-    slug:     "daraja-vs-paystack-kes",
+    slug:     "building-our-settlement-network",
     date:     "May 28, 2026",
     tag:      "Engineering",
-    title:    "Daraja vs Paystack for KES Settlements: What We Learned",
-    excerpt:  "Paystack does not support M-Pesa Till or Paybill transfers. Daraja does — but the integration is not trivial. Here is what we learned building both.",
+    title:    "Till, Paybill, or Phone: Building a Settlement Network That Handles All Three",
+    excerpt:  "M-Pesa Till and Paybill transfers behave nothing like a personal phone payout under the hood. Here is what we learned building one settlement engine that handles all of it reliably.",
     readTime: "8 min read",
   },
   {
