@@ -8,8 +8,8 @@ import userRoutes       from "./Modules/users/user.routes";
 import merchantRoutes   from "./Modules/merchants/merchant.routes";
 import paymentRoutes    from "./Modules/Payments/Payment.routes";
 import settlementRoutes from "./Modules/Settlements/Settlement.routes";
-import paystackRoutes   from "./Modules/Settlements/paystack.routes";
-import darajaRoutes     from "./Modules/Settlements/daraja.routes";
+import pretiumRoutes    from "./Modules/Settlements/pretium.routes";
+import apiKeyRoutes     from "./Modules/ApiKeys/apiKey.routes";
 import consentRoutes    from "./Modules/Consent/consent.routes";
 import adminRoutes      from "./Modules/admin/admin.routes";
 import { apiLimiter }   from "./shared/Middleware/rateLimit";
@@ -25,8 +25,8 @@ app.set("trust proxy", 1);
 // ── Global middleware ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors());
-// Capture raw body for Paystack webhook signature verification
-app.use("/paystack/webhook", express.json({
+// Capture raw body for settlement webhook signature verification
+app.use("/pretium/webhook", express.json({
   verify: (req: any, _res, buf) => { req.rawBody = buf; },
 }));
 app.use(express.json());
@@ -51,7 +51,7 @@ app.get("/health", async (_, res) => {
     }
   };
 
-  const [database, queue, avalanche, paystack] = await Promise.all([
+  const [database, queue, avalanche, settlement] = await Promise.all([
     probe(async () => { await prisma.$queryRaw`SELECT 1`; }),
     probe(async () => { await connection.ping(); }),
     probe(async () => {
@@ -59,12 +59,12 @@ app.get("/health", async (_, res) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
     }),
     probe(async () => {
-      const r = await fetch("https://api.paystack.co", { signal: AbortSignal.timeout(4000) });
+      const r = await fetch(process.env.PRETIUM_BASE_URL!, { signal: AbortSignal.timeout(4000) });
       if (r.status >= 500) throw new Error(`HTTP ${r.status}`);
     }),
   ]);
 
-  const checks = { database, queue, avalanche, paystack };
+  const checks = { database, queue, avalanche, settlement };
   const allUp  = Object.values(checks).every((c) => c.status === "up");
   const anyDown = Object.values(checks).some((c) => c.status === "down");
 
@@ -84,10 +84,9 @@ app.use("/users",       userRoutes);
 app.use("/merchants",   merchantRoutes);
 app.use("/payments",    paymentRoutes);
 app.use("/settlements", settlementRoutes);
-// Paystack webhook (no auth — Paystack calls this, signature verified inside)
-app.use("/paystack",    paystackRoutes);
-// Daraja callbacks (no auth — Safaricom calls these directly)
-app.use("/daraja",      darajaRoutes);
+// Settlement provider webhook (no auth — provider calls this, signature verified inside)
+app.use("/pretium",     pretiumRoutes);
+app.use("/api-keys",    apiKeyRoutes);
 // Consent recording & admin audit
 app.use("/consent",     consentRoutes);
 // Admin dashboard routes
