@@ -23,6 +23,13 @@ router.get(
   controller.analytics.bind(controller)
 );
 
+// Settlement statement (CSV) — must be registered before the /:id route below
+router.get(
+  "/statement",
+  authenticateMerchant,
+  controller.statement.bind(controller)
+);
+
 // Create payment
 router.post(
   "/",
