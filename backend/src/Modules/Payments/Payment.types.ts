@@ -8,6 +8,7 @@ export interface CreatePaymentDto {
   reference?:      string;
   idempotencyKey?: string;
   metadata?:       Record<string, unknown>;
+  isTest?:         boolean;  // set when the request was authenticated with a test API key
 }
 
 export interface PaymentResponse {
@@ -23,4 +24,5 @@ export interface PaymentResponse {
   expiresAt:      Date;
   network:        string;
   token:          string;
+  isTest:         boolean;
 }
