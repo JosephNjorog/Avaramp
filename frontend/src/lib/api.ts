@@ -73,7 +73,8 @@ export const merchantsApi = {
 // ── API Keys ──────────────────────────────────────────────────────────────────
 export const apiKeysApi = {
   list:   ()               => api.get("/api-keys"),
-  create: (name: string)   => api.post("/api-keys", { name }),
+  create: (name: string, mode: "live" | "test" = "live") =>
+    api.post("/api-keys", { name, mode }),
   revoke: (id: string)     => api.delete(`/api-keys/${id}`),
 };
 
@@ -92,6 +93,8 @@ export const paymentsApi = {
   }) => api.get("/payments", { params }),
   analytics: (params?: { merchantId?: string }) =>
     api.get("/payments/analytics", { params }),
+  statement: () =>
+    api.get("/payments/statement", { responseType: "blob" }),
 };
 
 // ── Consent ───────────────────────────────────────────────────────────────────
