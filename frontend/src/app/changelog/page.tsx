@@ -1,5 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { GradientHero } from "@/components/ui/GradientHero";
 
 export const metadata = { title: "Changelog — AvaRamp" };
 
@@ -91,7 +92,7 @@ export default function ChangelogPage() {
       <main className="pt-24 pb-24">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
 
-          <div className="mb-12">
+          <GradientHero className="mb-12 pt-4 pb-2 -mt-4">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-indigo-DEFAULT bg-indigo-dim border border-indigo-border rounded-full px-3 py-1 mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-DEFAULT animate-pulse" />
               Product updates
@@ -100,7 +101,7 @@ export default function ChangelogPage() {
             <p className="text-secondary text-lg">
               Every release, every fix, every improvement — in one place.
             </p>
-          </div>
+          </GradientHero>
 
           <div className="space-y-12">
             {RELEASES.map((release, i) => (
